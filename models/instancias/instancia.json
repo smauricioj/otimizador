@@ -1,0 +1,24 @@
+{
+    "static_data":{
+        "number_of_vehicles":2,
+        "max_vehicle_capacity":2,
+        "service_time":3
+    },
+    "requests":[{
+        "max_wait_time":2,
+        "max_ride_time":100,
+        "known_time":0,
+        "desired_time":1,
+        "service_point_x":0,
+        "service_point_y":1,
+        "service_type":0
+    },{
+        "max_wait_time":2,
+        "max_ride_time":100,
+        "known_time":0,
+        "desired_time":1,
+        "service_point_x":1,
+        "service_point_y":0,
+        "service_type":0
+    }]
+}
