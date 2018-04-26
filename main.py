@@ -13,6 +13,7 @@ if __name__ == "__main__":
     n, m, Q = ins.n, ins.m, ins.Q
     q, s, t = ins.get_q(), ins.get_s(), ins.get_t()
     W, R = ins.get_W(), ins.get_R()
+    tau = ins.get_tau()
     
     #print q
     #print s
