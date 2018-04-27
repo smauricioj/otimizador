@@ -14,6 +14,9 @@ if __name__ == "__main__":
     q, s, t = ins.get_q(), ins.get_s(), ins.get_t()
     W, R = ins.get_W(), ins.get_R()
     tau = ins.get_tau()
+    custo = tau
+    # for k, v in tau.iteritems():
+    #     print k, ' : ',v
     
     #print q
     #print s
@@ -26,17 +29,19 @@ if __name__ == "__main__":
     locais   = [0]+origens+destinos+[2*n+1]
     veiculos = range(m)
                  
-    custo = {(0,1):  1, (0,2):  1, (0,5):  0,
-             (1,2):  1, (1,3):  1, (1,4):  1,
-             (2,1):  1, (2,3):  1, (2,4):  1,
-             (3,2):  1, (3,4):  1, (3,5):  1,
-             (4,1):  1, (4,3):  1, (4,5):  1}
+    custo = {(0,1):  0, (0,2):  0, (0,5):  0,
+             (1,2):  0, (1,3):  0, (1,4):  0,
+             (2,1):  0, (2,3):  0, (2,4):  0,
+             (3,2):  0, (3,4):  0, (3,5):  0,
+             (4,1):  0, (4,3):  0, (4,5):  0}
              
     tau =   {(0,1):  1, (0,2):  1, (0,5):  0,
              (1,2):  1, (1,3):  1, (1,4):  1,
              (2,1):  1, (2,3):  1, (2,4):  1,
              (3,2):  1, (3,4):  1, (3,5):  1,
              (4,1):  1, (4,3):  1, (4,5):  1}
+
+    tau = custo
              
     #custo = {(0,1):  1, (0,3):  0, (1,2):  1, (2,3):  1}
     #tau = {(0,1):  1, (0,3):  0, (1,2):  2, (2,3):  1}
@@ -67,7 +72,7 @@ if __name__ == "__main__":
     T = mod.addVars(instantes, lb=0.0,         vtype=GRB.CONTINUOUS, name="T")
     u = mod.addVars(carga,     lb=0.0,         vtype=GRB.INTEGER,    name="u")
     
-    pesos = [0.1, 0.3, 0.6]
+    pesos = [0.99, 0, 0.01]
     soma_custos = quicksum(x[ijk]*custo[ij]
                                for ijk in viagens for ij in arcos
                                if ijk[0] == ij[0] and ijk[1] == ij[1])
@@ -88,7 +93,7 @@ if __name__ == "__main__":
     #
     #mod.setObjective(quicksum(T[(i,k)] - T[(i+n,k)] for i in origens for k in veiculos
     #                          ), GRB.MINIMIZE)
-    
+
     for i in locais:
         # Eq. 1.3
         if i not in [0, 2*n+1]:
@@ -117,9 +122,7 @@ if __name__ == "__main__":
                 mod.addConstr( y[ik] == sum_saida )
                 mod.addConstr( sum_saida - sum_entrada == 0 )
             
-            # Eq. 1.8
-            mod.addConstr( q[i] + u[ik] <= Q )
-            
+            # Eq. 1.8            
             if i in origens:
                 d = i+n
                 dk = (d,k)
@@ -129,7 +132,7 @@ if __name__ == "__main__":
                 
                 # Eq. 1.10
                 mod.addConstr( t[i] <= T[ik] )
-                mod.addConstr( T[ik] <= t[i] + W[i] )
+                mod.addConstr( T[ik] <= t[i] + W[i])
                 
                 # Eq. 1.11
                 mod.addConstr( T[dk] <= T[ik] + R[i] + s[i] - s[d] )
@@ -147,15 +150,22 @@ if __name__ == "__main__":
             # Eq. 1.7
             mod.addConstr( u[ik] - u[jk] + Q*y[jk] <= Q - q[j] )
             
-    for k in veiculos:        
+    for k in veiculos:   
         mod.addConstr( u[(2*n+1,k)] == 0 ) # Não há restrições para 'saidas' de
                                            #    veículos de 2n+1, portanto carga
                                            #    poderia ser qualquer valor.
                                            #    Agora não.
-        
-#    mod.optimize()
-#    mod.printAttr('X')
-#    print('Obj: %g' %mod.objVal)
+    
+    # mod.addConstr( x[(1,2,0)] == 1 )
+    mod.optimize()
+    mod.printAttr('X')
+    # try:
+    #     mod.printAttr('X')
+    # except:
+    #     mod.feasRelaxS(0, True, False, True);
+    #     mod.optimize()
+    #     mod.printAttr('X')
+    print('Obj: %g' %mod.objVal)
 
 
 
