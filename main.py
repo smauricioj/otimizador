@@ -8,7 +8,7 @@ from gurobipy import Model, GRB, quicksum
 from models.instancia import Instancia
 
 if __name__ == "__main__":
-    ins = Instancia('instancia.json')
+    ins = Instancia('instancia004.json')
     M = GRB.INFINITY
     n, m, Q = ins.n, ins.m, ins.Q
     q, s, t = ins.get_q(), ins.get_s(), ins.get_t()
@@ -18,47 +18,15 @@ if __name__ == "__main__":
     # for k, v in tau.iteritems():
     #     print k, ' : ',v
     
-    #print q
-    #print s
-    #print t
-    #print W
-    #print R
-    
     origens  = [o+1 for o in range(n)]
     destinos = [d+1+n for d in range(n)]
     locais   = [0]+origens+destinos+[2*n+1]
     veiculos = range(m)
-                 
-    custo = {(0,1):  0, (0,2):  0, (0,5):  0,
-             (1,2):  0, (1,3):  0, (1,4):  0,
-             (2,1):  0, (2,3):  0, (2,4):  0,
-             (3,2):  0, (3,4):  0, (3,5):  0,
-             (4,1):  0, (4,3):  0, (4,5):  0}
-             
-    tau =   {(0,1):  1, (0,2):  1, (0,5):  0,
-             (1,2):  1, (1,3):  1, (1,4):  1,
-             (2,1):  1, (2,3):  1, (2,4):  1,
-             (3,2):  1, (3,4):  1, (3,5):  1,
-             (4,1):  1, (4,3):  1, (4,5):  1}
 
     tau = custo
-             
-    #custo = {(0,1):  1, (0,3):  0, (1,2):  1, (2,3):  1}
-    #tau = {(0,1):  1, (0,3):  0, (1,2):  2, (2,3):  1}
-            
-    #s = {0: 0, 1: 3, 2: 3, 3:0}
-    #q = {0: 0, 1: 1, 2:-1, 3:0}
-    #t = {1: 5}
-    #W = {1: 2}
-    #R = {1: 6}
     
     arcos = custo.keys()
     vertices = list(set(sum(arcos, ())))
-    
-    #print arcos
-    #print vertices
-    #for ijk in viagens:
-    #    print ijk
     
     mod = Model("Roteamento")
     
@@ -72,30 +40,20 @@ if __name__ == "__main__":
     T = mod.addVars(instantes, lb=0.0,         vtype=GRB.CONTINUOUS, name="T")
     u = mod.addVars(carga,     lb=0.0,         vtype=GRB.INTEGER,    name="u")
     
-    pesos = [0.99, 0, 0.01]
-    soma_custos = quicksum(x[ijk]*custo[ij]
-                               for ijk in viagens for ij in arcos
-                               if ijk[0] == ij[0] and ijk[1] == ij[1])
-    soma_tempos_viagens = quicksum( (T[ik] - t[i])*(T[ik] - t[i])
-                                        for ik in visitas for i in origens
-                                        if ik[0] == i)
-    soma_tempos_espera = quicksum( (T[(i,k)] - T[(i+n,k)])*(T[(i,k)] - T[(i+n,k)])
-                                        for i in origens for k in veiculos)
-    somas = [soma_custos, soma_tempos_viagens, soma_tempos_espera]
-    soma_final = None
-    for i in range(3):
-        soma_final += pesos[i]*somas[i]
+    exp = 0
+    exp += 0.5*quicksum(x[ijk]*custo[ij]
+                        for ijk in viagens for ij in arcos
+                        if ijk[0] == ij[0] and ijk[1] == ij[1])
+    exp += 0.3*quicksum((T[ik] - t[i])*(T[ik] - t[i])
+                        for ik in visitas for i in origens
+                        if ik[0] == i)
+    exp += 0.2*quicksum((T[(i,k)] - T[(i+n,k)])*(T[(i,k)] - T[(i+n,k)])
+                        for i in origens for k in veiculos)
 
-    mod.setObjective(soma_final, GRB.MINIMIZE)
-    
-    #mod.setObjective(quicksum(T[ik] - t[i] for ik in visitas for i in origens
-    #                          if ik[0] == i), GRB.MINIMIZE)
-    #
-    #mod.setObjective(quicksum(T[(i,k)] - T[(i+n,k)] for i in origens for k in veiculos
-    #                          ), GRB.MINIMIZE)
+    mod.setObjective(exp, GRB.MINIMIZE)
 
     for i in locais:
-        # Eq. 1.3
+        # Eq. 1.4
         if i not in [0, 2*n+1]:
             mod.addConstr( quicksum(y[ik] for ik in visitas if ik[0] == i) == 1 )
         else:
@@ -111,7 +69,7 @@ if __name__ == "__main__":
             sum_entrada = quicksum(x[ijk] for ijk in viagens if ijk in all_ijk_delta_mais)
             sum_saida = quicksum(x[ijk] for ijk in viagens if ijk in all_ijk_delta_menos)
             
-            # Eq. 1.4 e 1.5
+            # Eq. 1.3 e 1.5
             if i == 2*n+1:
                 mod.addConstr( y[ik] == sum_entrada )
                 mod.addConstr( sum_saida - sum_entrada == -1 )
@@ -121,8 +79,7 @@ if __name__ == "__main__":
             else:
                 mod.addConstr( y[ik] == sum_saida )
                 mod.addConstr( sum_saida - sum_entrada == 0 )
-            
-            # Eq. 1.8            
+                       
             if i in origens:
                 d = i+n
                 dk = (d,k)
@@ -130,11 +87,11 @@ if __name__ == "__main__":
                 # Eq. 1.6
                 mod.addConstr( y[ik] == y[dk] )
                 
-                # Eq. 1.10
+                # Eq. 1.9
                 mod.addConstr( t[i] <= T[ik] )
                 mod.addConstr( T[ik] <= t[i] + W[i])
                 
-                # Eq. 1.11
+                # Eq. 1.10
                 mod.addConstr( T[dk] <= T[ik] + R[i] + s[i] - s[d] )
                 
             
@@ -144,11 +101,11 @@ if __name__ == "__main__":
             ik, jk = (i,k), (j,k)
             ijk = (i,j,k)
             
-            # Eq. 1.9
-            mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*100 )
+            # Eq. 1.8
+            mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*1000 )
             
             # Eq. 1.7
-            mod.addConstr( u[ik] - u[jk] + Q*y[jk] <= Q - q[j] )
+            mod.addConstr( u[ik] + q[i] - u[jk] <= (1 - x[ijk])*Q )
             
     for k in veiculos:   
         mod.addConstr( u[(2*n+1,k)] == 0 ) # Não há restrições para 'saidas' de

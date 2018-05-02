@@ -217,18 +217,7 @@ class Instancia:
                         if antro in id_destinos_picks:
                             tau[arco] = self.__get_distance_deposito(df_total,antro)
                         else:
-                            tau[arco] = 0
-
-
-                # # Se a fonte for destino de pick e o antro for origem de drop
-                # #   então o tau é nulo
-                # if fonte in id_destinos_picks and antro in id_origens_drops:
-                #     tau[arco] = 0
-                # else:
-                #     if antro > self.n:
-                #         antro = antro-self.n
-                #     # se não, o arco é a distância entre os dois locais
-                #     tau[arco] = self.__get_distance(df_total,fonte,antro)               
+                            tau[arco] = 0             
         return tau
 
 
