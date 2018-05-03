@@ -6,27 +6,19 @@ Created on Thu Apr 19 13:14:13 2018
 """
 from gurobipy import Model, GRB, quicksum
 from models.instancia import Instancia
+from models.resultado import Resultado
 
 if __name__ == "__main__":
     ins = Instancia('instancia004.json')
+    res = Resultado(ins)
+    res.fig_requests()
     M = GRB.INFINITY
-    n, m, Q = ins.n, ins.m, ins.Q
-    q, s, t = ins.get_q(), ins.get_s(), ins.get_t()
-    W, R = ins.get_W(), ins.get_R()
-    tau = ins.get_tau()
-    custo = tau
-    # for k, v in tau.iteritems():
-    #     print k, ' : ',v
-    
-    origens  = [o+1 for o in range(n)]
-    destinos = [d+1+n for d in range(n)]
-    locais   = [0]+origens+destinos+[2*n+1]
-    veiculos = range(m)
-
-    tau = custo
-    
-    arcos = custo.keys()
-    vertices = list(set(sum(arcos, ())))
+    n, m, Q   = ins.n, ins.m, ins.Q
+    q, s, t   = ins.get_q(), ins.get_s(), ins.get_t()
+    W, R, tau = ins.get_W(), ins.get_R(), ins.get_tau()
+    custo, arcos = tau, tau.keys()    
+    origens, destinos, locais = ins.get_O(), ins.get_D(), ins.get_V()
+    veiculos = ins.get_K()
     
     mod = Model("Roteamento")
     
@@ -41,13 +33,13 @@ if __name__ == "__main__":
     u = mod.addVars(carga,     lb=0.0,         vtype=GRB.INTEGER,    name="u")
     
     exp = 0
-    exp += 0.5*quicksum(x[ijk]*custo[ij]
+    exp += 0.5*quicksum(x[ijk] * custo[ij]
                         for ijk in viagens for ij in arcos
                         if ijk[0] == ij[0] and ijk[1] == ij[1])
-    exp += 0.3*quicksum((T[ik] - t[i])*(T[ik] - t[i])
+    exp += 0.3*quicksum((T[ik] - t[i]) * (T[ik] - t[i])
                         for ik in visitas for i in origens
                         if ik[0] == i)
-    exp += 0.2*quicksum((T[(i,k)] - T[(i+n,k)])*(T[(i,k)] - T[(i+n,k)])
+    exp += 0.2*quicksum((T[(i,k)] - T[(i+n,k)]) * (T[(i,k)] - T[(i+n,k)])
                         for i in origens for k in veiculos)
 
     mod.setObjective(exp, GRB.MINIMIZE)
@@ -63,22 +55,20 @@ if __name__ == "__main__":
         delta_menos = [b for (a,b) in arcos if a == i]
             
         for k in veiculos:
-            ik = (i,k)
-            all_ijk_delta_mais  = [(j,i,k) for j in delta_mais]
-            all_ijk_delta_menos = [(i,j,k) for j in delta_menos]                               
-            sum_entrada = quicksum(x[ijk] for ijk in viagens if ijk in all_ijk_delta_mais)
-            sum_saida = quicksum(x[ijk] for ijk in viagens if ijk in all_ijk_delta_menos)
+            ik = (i,k)                              
+            sum_entrada = quicksum( x[ijk] for ijk in [(j,i,k) for j in delta_mais] )
+            sum_saida = quicksum( x[ijk] for ijk in [(i,j,k) for j in delta_menos] )
             
             # Eq. 1.3 e 1.5
             if i == 2*n+1:
                 mod.addConstr( y[ik] == sum_entrada )
                 mod.addConstr( sum_saida - sum_entrada == -1 )
-            elif i == 0:
-                mod.addConstr( y[ik] == sum_saida )
-                mod.addConstr( sum_saida - sum_entrada == 1 )
             else:
                 mod.addConstr( y[ik] == sum_saida )
-                mod.addConstr( sum_saida - sum_entrada == 0 )
+                if i == 0:
+                    mod.addConstr( sum_saida - sum_entrada == 1 )
+                else:
+                    mod.addConstr( sum_saida - sum_entrada == 0 )
                        
             if i in origens:
                 d = i+n
@@ -113,16 +103,12 @@ if __name__ == "__main__":
                                            #    poderia ser qualquer valor.
                                            #    Agora não.
     
-    # mod.addConstr( x[(1,2,0)] == 1 )
-    mod.optimize()
-    mod.printAttr('X')
-    # try:
-    #     mod.printAttr('X')
-    # except:
-    #     mod.feasRelaxS(0, True, False, True);
-    #     mod.optimize()
-    #     mod.printAttr('X')
-    print('Obj: %g' %mod.objVal)
+    # mod.optimize()
+
+    # print('Obj: %g' %mod.objVal)
+    # print('Runtime: %g' %mod.runtime)
+    # for v in mod.getVars():
+    #     print('Var {} = {}'.format(v.varName, v.x))
 
 
 

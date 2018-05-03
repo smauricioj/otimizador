@@ -1,6 +1,9 @@
 # Gurobi logs
 gurobi.log
 
+# Resultados em imagens
+resultados/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
