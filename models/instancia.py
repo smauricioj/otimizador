@@ -79,6 +79,20 @@ class Instancia:
                 pass
         return initial
 
+    '''
+    Todas as funções do tipo 'get_x(self)'
+        retornam os dados estáticos do problema.
+    Substituindo 'x' por as seguintes opções, temos:
+        q -> Embarque/Desembarque de passageiros por local
+        s -> Tempo de embarque/desembarque de passageiros no local
+        t -> Instante desejado do atendimento do pedido nas origens
+        W -> Tempo máximo de espera pelo atendimento nas origens
+        R -> Tempo máximo de viagem no atendimento em cada origem
+        O -> Todas as origens de pedidos
+        D -> Todos os destinos de pedidos
+        V -> Todos os vértices do grafo criado
+        K -> Todos os veículos
+    '''
     def get_q(self):
         d = {0:0, 2*self.n+1:0}
         d = self.__get_base(d, offset = False, item = 1)
@@ -97,8 +111,25 @@ class Instancia:
         
     def get_R(self):
         return self.__get_base(offset = False, item = "max_ride_time")
+
+    def get_O(self):
+        return [o+1 for o in range(self.n)]
+
+    def get_D(self):
+        return [o+self.n+1 for o in range(self.n)]
+
+    def get_V(self):
+        return [0]+self.get_O()+self.get_D()+[2*self.n+1]
+
+    def get_K(self):
+        return range(self.m)
         
     def get_tau(self):
+        '''
+        Retorna uma estrutura de dados do tipo dicionário, onde:
+            Index, do tipo tupla (a,b), representa o arco entre 'a' e 'b'
+            Value, do tipo float c, representa o tempo de viagem no arco
+        '''
         # Tempo de viagem do veículo que fica parado é nulo
         tau = {(0,2*self.n+1):0}
 
@@ -220,6 +251,24 @@ class Instancia:
                             tau[arco] = 0             
         return tau
 
+    def get_pos_requests(self):
+        '''
+        Retorna uma lista com tuplas que representam os pedidos,
+        incluindo os seguintes dados ordenados:
+            id do pedido (int)
+            posição x do pedido (float)
+            posição y do pedido (float)
+            tipo do pedido (str)
+        Método usado na criação de imagems que apresentam os
+        resultados obtidos
+        '''
+        df = DataFrame(self.__requests)
+        data = []
+        for i, r in enumerate(list(df[["service_point_x","service_point_y","service_type"]].values)):
+            id_pedido = i+1
+            x,y,t = float(r[0]),float(r[1]),str(r[2])
+            data.append((id_pedido,x,y,t))
+        return data
 
 
                 
