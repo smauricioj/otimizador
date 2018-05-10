@@ -9,17 +9,16 @@ from models.instancia import Instancia
 from models.resultado import Resultado
 
 if __name__ == "__main__":
-    ins = Instancia('instancia004.json')
+    ins = Instancia('instancia003.json')
     res = Resultado(ins)
     res.fig_requests()
     M = GRB.INFINITY
     n, m, Q   = ins.n, ins.m, ins.Q
     q, s, t   = ins.get_q(), ins.get_s(), ins.get_t()
     W, R, tau = ins.get_W(), ins.get_R(), ins.get_tau()
-    custo, arcos = tau, tau.keys()    
+    custo, arcos = tau, tau.keys()
     origens, destinos, locais = ins.get_O(), ins.get_D(), ins.get_V()
     veiculos = ins.get_K()
-    
     mod = Model("Roteamento")
     
     viagens   = {(i,j,k):0 for (i,j) in custo.keys() for k in veiculos}
@@ -83,14 +82,20 @@ if __name__ == "__main__":
                 
                 # Eq. 1.10
                 mod.addConstr( T[dk] <= T[ik] + R[i] + s[i] - s[d] )
-                
-            
+
     for ij in arcos:
+        i, j = ij[0], ij[1]
+            
+        delta_mais  = [a for (a,b) in arcos if b == i]
+        delta_menos = [b for (a,b) in arcos if a == i]
+
         for k in veiculos:
-            i, j = ij[0], ij[1]
             ik, jk = (i,k), (j,k)
             ijk = (i,j,k)
-            
+            jik = (j,i,k)
+            ijki = (i,j,k,i)
+            ijkj = (i,j,k,j)
+
             # Eq. 1.8
             mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*1000 )
             
@@ -102,36 +107,14 @@ if __name__ == "__main__":
                                            #    veículos de 2n+1, portanto carga
                                            #    poderia ser qualquer valor.
                                            #    Agora não.
-    
-    # mod.optimize()
 
-    # print('Obj: %g' %mod.objVal)
-    # print('Runtime: %g' %mod.runtime)
-    # for v in mod.getVars():
-    #     print('Var {} = {}'.format(v.varName, v.x))
+    mod.optimize()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    print('Obj: %g' %mod.objVal)
+    print('Runtime: %g' %mod.runtime)
+    # mod.printAttr('X')
+    for v in mod.getVars():
+        res.addTrip('{}={}'.format(v.varName, v.x))
+        # print('Var {} = {}'.format(v.varName, v.x))
+    res.fig_routes()
 

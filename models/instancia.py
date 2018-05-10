@@ -139,8 +139,8 @@ class Instancia:
         df_total = DataFrame(self.__requests)
         df_drops = df_total.loc[df_total["service_type"] == "drop"]
         df_picks = df_total.loc[df_total["service_type"] == "pick"]
-        id_origens_drops = [x+1 for x in list(df_drops.index.values)]
-        id_destinos_picks = [x+1 for x in list(df_picks.index.values)]
+        id_drops = [x+1 for x in list(df_drops.index.values)]
+        id_picks = [x+1 for x in list(df_picks.index.values)]
         pedidos = list(df_total.index.values)
 
         # Um grafo é um dicionário de listas
@@ -191,7 +191,7 @@ class Instancia:
             
             # Se a fonte for o deposito inicial
             if fonte == 0:
-                if antro in id_origens_drops:
+                if antro in id_drops:
                     # o tau é nulo se o antro for de drop
                     tau[arco] = 0
                 else:
@@ -200,7 +200,7 @@ class Instancia:
             # Se o antro for o deposito final
             elif antro == 2*self.n+1:
                 fonte = fonte-self.n
-                if fonte in id_destinos_picks:
+                if fonte in id_picks:
                     # o tau é nulo se a fonte for de pick
                     tau[arco] = 0
                 else:
@@ -216,9 +216,14 @@ class Instancia:
                     # Se o arco for entre origens de drops
                     #   ou entre origem de drop e destino de pick
                     #   o tau é nulo
-                    if fonte in id_origens_drops:
-                        if antro in id_origens_drops or antro-self.n in id_destinos_picks:
+                    # Se o arco for entre origem de drop e origem de pick
+                    #   ou entre origem de drop e destino de drop
+                    #   o tau é a distância entre o local e o deposito
+                    if fonte in id_drops:
+                        if antro in id_drops or antro-self.n in id_picks:
                             tau[arco] = 0
+                        elif antro in id_picks or antro-self.n in id_drops:
+                            tau[arco] = self.__get_distance_deposito(df_total,fonte)
                     else:
                         if antro > self.n:
                             antro = antro-self.n
@@ -229,27 +234,27 @@ class Instancia:
                 fonte = fonte-self.n
                 if antro > self.n:
                     antro = antro-self.n
-                    if fonte in id_origens_drops:
-                        if antro in id_destinos_picks:
+                    if fonte in id_drops:
+                        if antro in id_picks:
                             tau[arco] = self.__get_distance_deposito(df_total,fonte)
                         else:
                             tau[arco] = self.__get_distance(df_total,fonte,antro)
                     else:
-                        if antro in id_destinos_picks:
+                        if antro in id_picks:
                             tau[arco] = 0
                         else:
                             tau[arco] = self.__get_distance_deposito(df_total,fonte)
                 else:
-                    if fonte in id_origens_drops:
-                        if antro in id_origens_drops:
+                    if fonte in id_drops:
+                        if antro in id_drops:
                             tau[arco] = self.__get_distance_deposito(df_total,fonte)
                         else:
                             tau[arco] = self.__get_distance(df_total,fonte,antro)
                     else:
-                        if antro in id_destinos_picks:
+                        if antro in id_picks:
                             tau[arco] = self.__get_distance_deposito(df_total,antro)
                         else:
-                            tau[arco] = 0             
+                            tau[arco] = 0               
         return tau
 
     def get_pos_requests(self):
@@ -265,10 +270,11 @@ class Instancia:
         '''
         df = DataFrame(self.__requests)
         data = []
-        for i, r in enumerate(list(df[["service_point_x","service_point_y","service_type"]].values)):
+        columns = ["service_point_x","service_point_y","service_type","desired_time"]
+        for i, r in enumerate(list(df[columns].values)):
             id_pedido = i+1
-            x,y,t = float(r[0]),float(r[1]),str(r[2])
-            data.append((id_pedido,x,y,t))
+            x,y,t,d = float(r[0]),float(r[1]),str(r[2]),int(r[3])
+            data.append((id_pedido,x,y,t,d))
         return data
 
 
