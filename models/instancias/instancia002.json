@@ -1,8 +1,8 @@
 {
     "static_data":{
-        "number_of_vehicles":1,
+        "number_of_vehicles":2,
         "max_vehicle_capacity":1,
-        "service_time":0
+        "service_time":1
     },
     "requests":[{
         "max_wait_time":10,

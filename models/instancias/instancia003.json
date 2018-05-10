@@ -1,8 +1,8 @@
 {
     "static_data":{
-        "number_of_vehicles":1,
+        "number_of_vehicles":2,
         "max_vehicle_capacity":2,
-        "service_time":0
+        "service_time":1
     },
     "requests":[{
         "max_wait_time":10,
@@ -13,12 +13,28 @@
         "service_point_y":0,
         "service_type":"drop"
     },{
-        "max_wait_time":10,
+        "max_wait_time":1,
         "max_ride_time":100,
         "known_time":0,
         "desired_time":2,
         "service_point_x":0,
         "service_point_y":2,
         "service_type":"drop"
+    },{
+        "max_wait_time":10,
+        "max_ride_time":100,
+        "known_time":0,
+        "desired_time":2,
+        "service_point_x":-2,
+        "service_point_y":0,
+        "service_type":"pick"
+    },{
+        "max_wait_time":10,
+        "max_ride_time":100,
+        "known_time":0,
+        "desired_time":5,
+        "service_point_x":0,
+        "service_point_y":-2,
+        "service_type":"pick"
     }]
 }

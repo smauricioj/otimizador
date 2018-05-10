@@ -1,6 +1,6 @@
 {
     "static_data":{
-        "number_of_vehicles":3,
+        "number_of_vehicles":2,
         "max_vehicle_capacity":4,
         "service_time":2
     },
