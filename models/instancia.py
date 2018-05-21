@@ -5,7 +5,7 @@ Created on Mon Apr 23 14:23:44 2018
 @author: Sergio P.
 """
 from os import path
-from json import loads
+from json import loads, dumps
 from math import sqrt
 from pandas import DataFrame
 from collections import defaultdict
@@ -276,6 +276,7 @@ class Instancia:
             x,y,t,d = float(r[0]),float(r[1]),str(r[2]),int(r[3])
             data.append((id_pedido,x,y,t,d))
         return data
+
 
 
                 

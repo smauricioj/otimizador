@@ -5,6 +5,7 @@ Created on Thu Apr 19 13:14:13 2018
 @author: Sergio P.
 """
 from gurobipy import Model, GRB, quicksum
+
 from models.instancia import Instancia
 from models.resultado import Resultado
 
@@ -85,16 +86,10 @@ if __name__ == "__main__":
 
     for ij in arcos:
         i, j = ij[0], ij[1]
-            
-        delta_mais  = [a for (a,b) in arcos if b == i]
-        delta_menos = [b for (a,b) in arcos if a == i]
 
         for k in veiculos:
             ik, jk = (i,k), (j,k)
             ijk = (i,j,k)
-            jik = (j,i,k)
-            ijki = (i,j,k,i)
-            ijkj = (i,j,k,j)
 
             # Eq. 1.8
             mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*1000 )
@@ -115,6 +110,5 @@ if __name__ == "__main__":
     # mod.printAttr('X')
     for v in mod.getVars():
         res.addTrip('{}={}'.format(v.varName, v.x))
-        # print('Var {} = {}'.format(v.varName, v.x))
     res.fig_routes()
 

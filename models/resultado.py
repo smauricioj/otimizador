@@ -83,11 +83,11 @@ class Resultado:
 		kwargs = {
 			'axis':'both',
 		    'which':'both',      # both major and minor ticks are affected
-		    'bottom':False,      # ticks along the bottom edge are off
-		    'top':False,         # ticks along the top edge are off
+		    'bottom':False,      # ticks along the edges are off
+		    'top':False,         
 		    'left':False,
 		    'right':False,
-		    'labelbottom':False,  # labels along the bottom edge are off
+		    'labelbottom':False,  # labels along the edges are off
 		    'labelleft':False		
 		}
 		plt.tick_params(**kwargs)
