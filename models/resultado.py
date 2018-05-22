@@ -10,7 +10,7 @@ from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_net
 from os import path, makedirs
 
 class Resultado:
-
+	
 	def __init__(self, ins):
 		self.ins = ins
 		self.fmt = 'pdf'
@@ -103,7 +103,7 @@ class Resultado:
 				self.mapa_limites[1] = max(d[0], d[1])
 			if d[1] < self.mapa_limites[0] or d[2] < self.mapa_limites[0]:
 				self.mapa_limites[0] = min(d[0], d[1])
-			ax.text(d[1], d[2], str(d[4]), va = 'center', ha ='center', fontsize = 14)
+			ax.text(d[1], d[2], str(d[0]), va = 'center', ha ='center', fontsize = 14)
 
 		pos_drops_x = [d[1] for d in data if d[3] == 'drop']
 		pos_drops_y = [d[2] for d in data if d[3] == 'drop']

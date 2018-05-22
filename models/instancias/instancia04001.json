@@ -13,7 +13,7 @@
         "service_point_y":0,
         "service_type":"drop"
     },{
-        "max_wait_time":1,
+        "max_wait_time":10,
         "max_ride_time":100,
         "known_time":0,
         "desired_time":2,
