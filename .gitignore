@@ -3,6 +3,7 @@ gurobi.log
 
 # Resultados em imagens
 resultados/
+models/instancias/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
