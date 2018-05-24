@@ -12,7 +12,7 @@ from resultado import Resultado
 class Otimizador:
 
 	def __init__(self, ins_id):
-	    self.ins = Instancia('instancia{}.json'.format(ins_id))
+	    self.ins = Instancia('{}.json'.format(ins_id))
 	    self.res = Resultado(self.ins)
 	    self.res.fig_requests()
 
@@ -111,7 +111,6 @@ class Otimizador:
 
 		print('Obj: %g' %mod.objVal)
 		print('Runtime: %g' %mod.runtime)
-		# mod.printAttr('X')
 		for v in mod.getVars():
 		    self.res.addTrip('{}={}'.format(v.varName, v.x))
 		self.res.fig_routes()
