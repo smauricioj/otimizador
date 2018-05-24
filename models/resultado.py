@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from numpy import linspace
 from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_networkx_labels
 from os import path, makedirs
+from math import cos, sin
 
 class Resultado:
 	
@@ -15,7 +16,6 @@ class Resultado:
 		self.ins = ins
 		self.fmt = 'pdf'
 		self.mapa_limites = [-5,5]
-		self.offset_texto = 0.1
 		self.rotas = []
 		self.tempos = []
 		for i in range(self.ins.m):
@@ -55,7 +55,10 @@ class Resultado:
 			self.tempos[k].append((i,float(value)))
 		elif var == 'x' and float(value) == 1:
 			i, j, k = [int(x) for x in tup.split(',')]
-			self.rotas[k].append((i,j))
+			if i == 0 and j == (2 * self.ins.n) + 1:
+				pass
+			else:
+				self.rotas[k].append((i,j))
 
 	def fig_routes(self):
 		fig, ax = plt.subplots()
@@ -70,9 +73,25 @@ class Resultado:
 			pos[1] = [4, 5]
 			pos[2] = [6, 5]
 		else:
+			visitas = []
+
+			def domino(data):
+				start = cursor = 0
+				d = dict(data)
+				while True:
+					yield cursor
+					try:
+						cursor = d[cursor]
+					except KeyError:
+						return
+
+			for rota in self.rotas:
+				vertices = list(domino(rota))
+				visitas += [i for i in vertices if i > 0 and i <= self.ins.n]
+
 			for i, y_pos in enumerate(list(linspace(9,1,self.ins.n))):
-				pos[i+1] = [4, y_pos]
-				pos[self.ins.n+1+i] = [6, y_pos]
+				pos[visitas[i]] = [4, y_pos]
+				pos[visitas[i]+self.ins.n] = [6, y_pos]
 
 		G.add_nodes_from(range((2 * self.ins.n)+2))
 		draw_networkx_nodes(G, pos, ax = ax)
@@ -90,7 +109,8 @@ class Resultado:
 		    'labelbottom':False,  # labels along the edges are off
 		    'labelleft':False		
 		}
-		plt.tick_params(**kwargs)
+		plt.tick_params(**kwargs)		
+		plt.grid(True)
 		self.save_data('routes')
 
 	def fig_requests(self):
