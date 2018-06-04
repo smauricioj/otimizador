@@ -7,27 +7,50 @@ Created on Thu Apr 19 13:14:13 2018
 
 from models.otimizador import Otimizador
 from models.gerador import Gerador
+from models.resultado import Resultado
+from models.instancia import Instancia
 from getopt import getopt, GetoptError
 from sys import argv
+from os import listdir, path
 
 if __name__ == "__main__":
 
     try:
-        singles = 'og'
+        singles = 'ogr'
         opts, args = getopt(argv[1:],singles)
     except GetoptError as err:
         print str(err)
         exit()
     otimizar = False
     gerar = False
+    resultar = False
     for opt, opt_args in opts:
         if opt == '-o':
             otimizar = True
         if opt == '-g':
             gerar = True
+        if opt == '-r':
+            resultar = True
 
     if gerar:
         ger = Gerador()
+                
+        # ################################################### #
+        #                                                     #
+        # PANIC BUTTON - Caso delete todas as instâncias      #
+        #                                                     #
+        # q_veh = 4                                           #
+        # for cen in range(20):                               #
+        #     for n_req in range(1,11):                       #
+        #         n_veh = int(n_req / q_veh) + 1              #
+        #         for n_v in range(n_veh, n_veh+2):           #
+        #             ger.set_requests_data(n_req)            #
+        #             ger.set_static_data(n_v,q_veh,1)        #
+        #             ger.set_requests()                      #
+        #             ger.save_ins()                          #
+        # exit()                                              #
+        # ################################################### #
+
         print "#"*70
         print "#"
         print u"# Iniciando processo de gerar novas instâncias."
@@ -69,17 +92,6 @@ if __name__ == "__main__":
                 commited_response = True
             else:
                 print u'Reiniciando processo de gerar novas instâncias'
-                
-        q_veh = 4
-        for cen in range(20):
-            for n_req in range(1,11):
-                n_veh = int(n_req / q_veh) + 1
-                for n_v in range(n_veh, n_veh+2):
-                    ger.set_requests_data(n_req)
-                    ger.set_static_data(n_v,q_veh,1)
-                    ger.set_requests()
-                    ger.save_ins()
-        exit()
 
         for cen in range(data['n_cen']):
             ger.set_requests_data(data['n_req'])
@@ -95,11 +107,20 @@ if __name__ == "__main__":
         while not stop:
             r = raw_input('Qual instancia(s) otimizar? > ')
             if r == 'all':
-                pass
+                actual_path = path.dirname(path.abspath("__file__"))
+                instancia_path = path.join(actual_path,'models\\instancias')
+                print instancia_path
+                for filename in listdir(instancia_path):
+                    print filename
+                    ins_id = filename.split('.')[0]
+                    if int(ins_id.split('_')[0]) >= 7: 
+                        Otimizador(ins_id).begin()
             elif r == 'S':
                 stop = True
             else:
-                otm = Otimizador(r)
-                otm.begin()
+                Otimizador(r).begin()
+
+    if resultar:
+        Resultado(Instancia('00_00_000.json')).global_result_data()
 
     exit()

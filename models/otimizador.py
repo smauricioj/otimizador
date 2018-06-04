@@ -108,9 +108,13 @@ class Otimizador:
 		                                       #    Agora não.
 
 		mod.optimize()
-
-		print('Obj: %g' %mod.objVal)
-		print('Runtime: %g' %mod.runtime)
-		for v in mod.getVars():
-		    self.res.addTrip('{}={}'.format(v.varName, v.x))
-		self.res.fig_routes()
+		try:
+			print('Obj: %g' %mod.objVal)
+			print('Runtime: %g' %mod.runtime)
+			for v in mod.getVars():
+				self.res.addTrip('{}={}'.format(v.varName, v.x))
+			self.res.fig_requests()
+			self.res.fig_routes()
+			self.res.save_global_results(mod.runtime)
+		except Exception:
+			pass

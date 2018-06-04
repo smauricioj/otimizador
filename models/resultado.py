@@ -5,10 +5,12 @@ Created on Thu May 03 13:27:14 2018
 @author: Sergio P.
 """
 import matplotlib.pyplot as plt
-from numpy import linspace
+import pandas as pd
+from numpy import linspace, array
 from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_networkx_labels
 from os import path, makedirs
 from math import cos, sin
+from json import loads, dumps
 
 class Resultado:
 	
@@ -22,17 +24,22 @@ class Resultado:
 			self.rotas.append([])
 			self.tempos.append([])
 
-	def save_data(self, name):	
+		self.instancia_path = self.ins.instancia_path
+		self.instancia_name = path.split(self.instancia_path)[1].split('.')[0]
+		self.resultado_path = self.instancia_path
+		for i in range(3):
+			self.resultado_path = path.dirname(self.resultado_path)
+		self.resultado_path = path.join(self.resultado_path, 'resultados')
+		self.resultado_global_file_name = 'global.json'
+
+	def save_image_data(self, name):	
 		fig_file_name = '{}.{}'.format(name, self.fmt)
 
-		instancia_path = self.ins.instancia_path
-		instancia_name = path.split(instancia_path)[1].split('.')[0]
-
-		fig_file_path = instancia_path
+		fig_file_path = self.instancia_path
 		for i in range(3):
 			fig_file_path = path.dirname(fig_file_path)
 		fig_file_path = path.join(fig_file_path, 'resultados')
-		fig_file_path = path.join(fig_file_path, instancia_name)
+		fig_file_path = path.join(fig_file_path, self.instancia_name)
 
 		if not path.isdir(fig_file_path):
 			makedirs(fig_file_path)
@@ -111,7 +118,7 @@ class Resultado:
 		}
 		plt.tick_params(**kwargs)		
 		plt.grid(True)
-		self.save_data('routes')
+		self.save_image_data('routes')
 
 	def fig_requests(self):
 		data = self.ins.get_pos_requests()
@@ -150,4 +157,51 @@ class Resultado:
 			             fancybox=True, numpoints = 1)
 		leg.get_frame().set_alpha(0.5)
 		
-		self.save_data('requests')
+		self.save_image_data('requests')
+
+	def save_global_results(self, runtime):
+		global_path = path.join(self.resultado_path, self.resultado_global_file_name)
+		with open(global_path, 'r') as file:
+			try:
+				d = loads(file.read())
+			except ValueError:
+				d = {}
+			file.close()
+
+		d[self.instancia_name] = runtime
+
+		with open(global_path, 'w') as file:
+			file.write(dumps(d, indent = 4, separators = (',', ': '),
+								sort_keys = True))
+			file.close()
+
+	def global_result_data(self):
+		global_path = path.join(self.resultado_path, self.resultado_global_file_name)
+		with open(global_path, 'r') as file:
+			d = loads(file.read())
+			file.close()
+
+		data_list = []
+		time_mean = []
+		time_std  = []
+		for i in range(10):
+			data_list.append([])
+
+		for k, v in d.iteritems():
+			n_req, n_veh, id_ins = [int(x) for x in k.split('_')]
+			data_list[n_req-1].append(v)
+		for data in data_list:
+			if len(data) != 0:
+				time_mean.append(array(data).mean())
+				time_std.append(array(data).std())
+
+		fig, ax = plt.subplots()
+		ax.semilogy(range(1,len(time_mean)+1), time_mean)
+		plt.grid(True, which = 'major', ls = '-')		
+		plt.grid(True, which = 'minor')
+		plt.xlabel(u'Número de Pedidos')
+		plt.ylabel('Tempo (s)')
+		plt.title(u'Tempo médio de otimização')
+
+
+		self.save_image_data('time_mean')
