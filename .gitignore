@@ -1,9 +1,10 @@
 # Gurobi logs
 gurobi.log
 
-# Resultados em imagens
+# Resultados
 resultados/
 models/instancias/
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -16,7 +16,7 @@ from os import listdir, path
 if __name__ == "__main__":
 
     try:
-        singles = 'ogr'
+        singles = 'ogrt'
         opts, args = getopt(argv[1:],singles)
     except GetoptError as err:
         print str(err)
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     otimizar = False
     gerar = False
     resultar = False
+    tabelar = False
     for opt, opt_args in opts:
         if opt == '-o':
             otimizar = True
@@ -31,6 +32,8 @@ if __name__ == "__main__":
             gerar = True
         if opt == '-r':
             resultar = True
+        if opt == '-t':
+            tabelar = True
 
     if gerar:
         ger = Gerador()
@@ -113,8 +116,7 @@ if __name__ == "__main__":
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
-                    if int(ins_id.split('_')[0]) >= 7: 
-                        Otimizador(ins_id).begin()
+                    Otimizador(ins_id).begin()
             elif r == 'S':
                 stop = True
             else:
@@ -122,5 +124,47 @@ if __name__ == "__main__":
 
     if resultar:
         Resultado(Instancia('00_00_000.json')).global_result_data()
+
+    if tabelar:
+        from sqlite3 import connect
+        conn = connect('persistent_data.db')
+        c = conn.cursor()
+
+        # c.execute('''
+        #     CREATE TABLE global_results(ins_id TEXT PRIMARY KEY ASC,
+        #                                 w_time_mean REAL, w_time_std REAL,
+        #                                 t_time_mean REAL, t_time_std REAL,
+        #                                 runtime REAL, obj REAL)
+        # ''')
+
+        # c.execute('''
+        #     CREATE TABLE specific_results(ins_req_id TEXT PRIMARY KEY ASC,
+        #                                   veh_id INT, desired_time REAL,
+        #                                   ini_time REAL, fim_time REAL)
+        # ''')
+
+        # c.execute(''' DROP TABLE global_results ''')
+
+        # c.execute(''' DELETE FROM specific_results''')
+
+        # c.execute(''' VACUUM ''')
+
+        # print 'global'
+        # for row in c.execute(''' SELECT * FROM global_results '''):
+        #     print row
+        
+        # print 'specific'
+        # with open('data.txt', 'w') as file:
+        #     count = 0
+        #     for row in c.execute(''' SELECT * FROM specific_results'''):
+        #         file.write('{}:'.format(count))
+        #         for d in row:
+        #             file.write(str(d)+', ')
+        #         file.write('\n')
+        #         count += 1
+        #     file.close()
+
+        conn.commit()
+        conn.close()
 
     exit()
