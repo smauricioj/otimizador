@@ -11,6 +11,7 @@ from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_net
 from os import path, makedirs
 from math import cos, sin
 from json import loads, dumps
+from sqlite3 import connect
 
 class Resultado:
 	
@@ -205,3 +206,72 @@ class Resultado:
 
 
 		self.save_image_data('time_mean')
+
+	def result_data_DB(self, rtime, obj):
+		conn = connect('persistent_data.db')
+		c = conn.cursor()
+		data = self.ins.get_pos_requests()
+		# print 'rotas'
+		# for veh in self.rotas:
+		# 	print veh
+		# print 'tempos'
+		# for veh in self.tempos:
+		# 	print veh
+		w_times = []
+		t_times = []
+		specific_data = []
+		for req in data:
+			desired_time = req[4]
+			real_time = None
+			for id_veh, data_veh in enumerate(self.rotas):
+				for tup in data_veh:
+					if req[0] in tup:
+						id_veh_service = id_veh
+			for tup in self.tempos[id_veh_service]:
+				if tup[0] == req[0]:
+					real_time = tup[1]
+				elif tup[0] == req[0]+self.ins.n:
+					end_time = tup[1]
+			w_times.append(real_time - desired_time)
+			t_times.append(end_time - real_time)
+			specific_data.append( (self.instancia_name+'_'+str(req[0]), id_veh_service, desired_time, real_time, end_time) )
+		w_times = array(w_times)
+		t_times = array(t_times)
+		global_data = [(self.instancia_name, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), rtime, obj)]
+		for data in global_data:
+			c.execute(''' INSERT INTO global_results VALUES (?,?,?,?,?,?,?)''', data)
+		for data in specific_data:
+			c.execute(''' INSERT INTO specific_results VALUES (?,?,?,?,?)''', data)
+
+		conn.commit()
+		conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

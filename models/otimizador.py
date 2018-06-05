@@ -23,7 +23,10 @@ class Otimizador:
 		arcos = tau.keys()
 		origens, destinos, locais = self.ins.get_O(), self.ins.get_D(), self.ins.get_V()
 		veiculos = self.ins.get_K()
+
 		mod = Model("Roteamento")
+		mod.params.MIPGap = 0.1
+		mod.params.TimeLimit = 20*60
 
 		viagens   = {(i,j,k):0 for (i,j) in tau.keys() for k in veiculos}
 		instantes = {(i,k):0   for i in locais for k in veiculos}
@@ -34,13 +37,13 @@ class Otimizador:
 		u = mod.addVars(carga,     lb=0.0,         vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
-		exp += 0.0*quicksum(x[ijk] * tau[ij]
+		exp += 0.25*quicksum(x[ijk] * tau[ij]
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
 		exp += 0.5*quicksum((T[ik] - t[i]) * (T[ik] - t[i])
 		                    for ik in instantes for i in origens
 		                    if ik[0] == i)
-		exp += 0.5*quicksum((T[(i,k)] - T[(i+n,k)]) * (T[(i,k)] - T[(i+n,k)])
+		exp += 0.25*quicksum((T[(i,k)] - T[(i+n,k)]) * (T[(i,k)] - T[(i+n,k)])
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)
@@ -131,5 +134,6 @@ class Otimizador:
 			self.res.fig_requests()
 			self.res.fig_routes()
 			self.res.save_global_results(mod.runtime)
+			self.res.result_data_DB(mod.runtime, mod.objVal)
 		except Exception:
 			pass
