@@ -6,7 +6,7 @@ Created on Thu May 03 13:27:14 2018
 """
 import matplotlib.pyplot as plt
 import pandas as pd
-from numpy import linspace, array
+import numpy as np
 from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_networkx_labels
 from os import path, makedirs
 from math import cos, sin
@@ -19,6 +19,7 @@ class Resultado:
 		self.ins = ins
 		self.fmt = 'pdf'
 		self.mapa_limites = [-5,5]
+
 		self.rotas = []
 		self.tempos = []
 		for i in range(self.ins.m):
@@ -27,11 +28,6 @@ class Resultado:
 
 		self.instancia_path = self.ins.instancia_path
 		self.instancia_name = path.split(self.instancia_path)[1].split('.')[0]
-		self.resultado_path = self.instancia_path
-		for i in range(3):
-			self.resultado_path = path.dirname(self.resultado_path)
-		self.resultado_path = path.join(self.resultado_path, 'resultados')
-		self.resultado_global_file_name = 'global.json'
 
 	def save_image_data(self, name):	
 		fig_file_name = '{}.{}'.format(name, self.fmt)
@@ -97,7 +93,7 @@ class Resultado:
 				vertices = list(domino(rota))
 				visitas += [i for i in vertices if i > 0 and i <= self.ins.n]
 
-			for i, y_pos in enumerate(list(linspace(9,1,self.ins.n))):
+			for i, y_pos in enumerate(list(np.linspace(9,1,self.ins.n))):
 				pos[visitas[i]] = [4, y_pos]
 				pos[visitas[i]+self.ins.n] = [6, y_pos]
 
@@ -160,84 +156,88 @@ class Resultado:
 		
 		self.save_image_data('requests')
 
-	def save_global_results(self, runtime):
-		global_path = path.join(self.resultado_path, self.resultado_global_file_name)
-		with open(global_path, 'r') as file:
-			try:
-				d = loads(file.read())
-			except ValueError:
-				d = {}
-			file.close()
-
-		d[self.instancia_name] = runtime
-
-		with open(global_path, 'w') as file:
-			file.write(dumps(d, indent = 4, separators = (',', ': '),
-								sort_keys = True))
-			file.close()
-
 	def global_result_data(self):
-		global_path = path.join(self.resultado_path, self.resultado_global_file_name)
-		with open(global_path, 'r') as file:
-			d = loads(file.read())
-			file.close()
-
-		data_list = []
-		time_mean = []
-		time_std  = []
-		for i in range(10):
-			data_list.append([])
-
-		for k, v in d.iteritems():
-			n_req, n_veh, id_ins = [int(x) for x in k.split('_')]
-			data_list[n_req-1].append(v)
-		for data in data_list:
-			if len(data) != 0:
-				time_mean.append(array(data).mean())
-				time_std.append(array(data).std())
-
-		fig, ax = plt.subplots()
-		ax.semilogy(range(1,len(time_mean)+1), time_mean)
-		plt.grid(True, which = 'major', ls = '-')		
-		plt.grid(True, which = 'minor')
-		plt.xlabel(u'Número de Pedidos')
-		plt.ylabel('Tempo (s)')
-		plt.title(u'Tempo médio de otimização')
-
-
-		self.save_image_data('time_mean')
-
-	def result_data_DB(self, rtime, obj):
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
-		data = self.ins.get_pos_requests()
+
+		class DataList(list):
+			def __init__(self, what, size):
+				self.what = what
+				self.mean = []
+				self.std = []
+				for _ in range(size):
+					self.append([])
+
+			def update_mean_std(self):
+				for data in self:
+					if len(data) != 0:
+						self.mean.append(array(data).mean())
+						self.std.append(array(data).std())
+
+		w_time_data = DataList(u"Tempo de espera", 10)
+		t_time_data = DataList(u"Tempo de viagem", 10)
+		o_time_data = DataList(u"Tempo de otimizacao", 10)
+
+		for row in c.execute("SELECT * FROM specific_results"):
+			ins_req_id, veh_id, d_time, i_time, e_time = row
+			n_req, n_veh, n_ins, req_id = [int(x) for x in ins_req_id.split('_')]
+			if n_req != 0:
+				w_time_data[n_req-1].append(i_time - d_time)
+				t_time_data[n_req-1].append(e_time - i_time)
+		for row in c.execute("SELECT * FROM global_results"):
+			n_ins, runtime = row[0], row[5]
+			n_req, n_veh, n_ins = [int(x) for x in n_ins.split('_')]
+			if n_req != 0:
+				o_time_data[n_req-1].append(runtime)
+		w_time_data.update_mean_std()
+		t_time_data.update_mean_std()
+		o_time_data.update_mean_std()
+
+
+		def plot_datalist(datalist):
+			fig, ax = plt.subplots()
+			ax.semilogy(range(1,len(datalist.mean)+1), datalist.mean)
+			plt.grid(True, which = 'major', ls = '-')		
+			plt.grid(True, which = 'minor')
+			plt.xlabel(u"Número de pedidos")
+			plt.ylabel(datalist.what)
+			plt.title(datalist.what+u' x número de pedidos')
+			self.save_image_data(datalist.what)
+
+		plot_datalist(w_time_data)
+		plot_datalist(t_time_data)
+		plot_datalist(o_time_data)
+
+	def result_data_DB(self, rtime, obj):
+		req_data = self.ins.get_pos_requests()
 		# print 'rotas'
 		# for veh in self.rotas:
 		# 	print veh
 		# print 'tempos'
 		# for veh in self.tempos:
 		# 	print veh
-		w_times = []
-		t_times = []
+		w_times = np.array([])
+		t_times = np.array([])
 		specific_data = []
-		for req in data:
+		for req in req_data:
 			desired_time = req[4]
-			real_time = None
+			ini_time = None
 			for id_veh, data_veh in enumerate(self.rotas):
 				for tup in data_veh:
 					if req[0] in tup:
 						id_veh_service = id_veh
 			for tup in self.tempos[id_veh_service]:
 				if tup[0] == req[0]:
-					real_time = tup[1]
+					ini_time = tup[1]
 				elif tup[0] == req[0]+self.ins.n:
 					end_time = tup[1]
-			w_times.append(real_time - desired_time)
-			t_times.append(end_time - real_time)
-			specific_data.append( (self.instancia_name+'_'+str(req[0]), id_veh_service, desired_time, real_time, end_time) )
-		w_times = array(w_times)
-		t_times = array(t_times)
+			w_times = np.append(w_times, ini_time - desired_time)
+			t_times = np.append(t_times, end_time - ini_time)
+			specific_data.append( (self.instancia_name+'_'+str(req[0]), id_veh_service, desired_time, ini_time, end_time) )
 		global_data = [(self.instancia_name, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), rtime, obj)]
+
+		conn = connect('persistent_data.db')
+		c = conn.cursor()
 		for data in global_data:
 			c.execute(''' INSERT INTO global_results VALUES (?,?,?,?,?,?,?)''', data)
 		for data in specific_data:

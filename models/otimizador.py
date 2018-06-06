@@ -133,7 +133,6 @@ class Otimizador:
 				self.res.addTrip('{}={}'.format(v.varName, v.x))
 			self.res.fig_requests()
 			self.res.fig_routes()
-			self.res.save_global_results(mod.runtime)
 			self.res.result_data_DB(mod.runtime, mod.objVal)
 		except Exception:
 			pass
