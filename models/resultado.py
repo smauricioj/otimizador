@@ -114,7 +114,7 @@ class Resultado:
 		    'labelleft':False		
 		}
 		plt.tick_params(**kwargs)		
-		plt.grid(True)
+		plt.grid(False)
 		self.save_image_data('routes')
 
 	def fig_requests(self):
@@ -156,7 +156,7 @@ class Resultado:
 		
 		self.save_image_data('requests')
 
-	def global_result_data(self):
+	def plot_global_result_data(self):
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
@@ -168,48 +168,53 @@ class Resultado:
 				for _ in range(size):
 					self.append([])
 
-			def update_mean_std(self):
+			def plot(self, save_method):
 				for data in self:
-					if len(data) != 0:
-						self.mean.append(array(data).mean())
-						self.std.append(array(data).std())
+					if len(data) == 0:
+						value_mean = None
+						value_std = None
+					else:
+						value_mean = np.array(data).mean()
+						value_std = np.array(data).std()
+					self.mean.append(value_mean)
+					self.std.append(value_std)
+				fig, ax = plt.subplots()
+				if self.what == u"Tempo de otimizacao":
+					ax.semilogy(range(1,len(self.mean)+1), self.mean, linestyle = '-', marker = '*', label = u'Média')
+					ax.semilogy(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '*', label = u'Std')
+				else:
+					ax.plot(range(1,len(self.mean)+1), self.mean, linestyle = '-', marker = '*', label = u'Média')
+					ax.plot(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '*', label = u'Std')
+				plt.grid(True, which = 'major', ls = '-')		
+				plt.grid(True, which = 'minor')
+				plt.xlabel(u"Número de pedidos")
+				plt.ylabel(self.what)
+				plt.title(self.what+u' x número de pedidos')
+				plt.legend()
+				save_method(self.what)
 
 		w_time_data = DataList(u"Tempo de espera", 10)
 		t_time_data = DataList(u"Tempo de viagem", 10)
 		o_time_data = DataList(u"Tempo de otimizacao", 10)
 
 		for row in c.execute("SELECT * FROM specific_results"):
-			ins_req_id, veh_id, d_time, i_time, e_time = row
-			n_req, n_veh, n_ins, req_id = [int(x) for x in ins_req_id.split('_')]
-			if n_req != 0:
+			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+			if n_req != 0 and n_veh == 4:
 				w_time_data[n_req-1].append(i_time - d_time)
 				t_time_data[n_req-1].append(e_time - i_time)
 		for row in c.execute("SELECT * FROM global_results"):
-			n_ins, runtime = row[0], row[5]
-			n_req, n_veh, n_ins = [int(x) for x in n_ins.split('_')]
+			n_req, runtime = row[0], row[8]
 			if n_req != 0:
 				o_time_data[n_req-1].append(runtime)
-		w_time_data.update_mean_std()
-		t_time_data.update_mean_std()
-		o_time_data.update_mean_std()
 
-
-		def plot_datalist(datalist):
-			fig, ax = plt.subplots()
-			ax.semilogy(range(1,len(datalist.mean)+1), datalist.mean)
-			plt.grid(True, which = 'major', ls = '-')		
-			plt.grid(True, which = 'minor')
-			plt.xlabel(u"Número de pedidos")
-			plt.ylabel(datalist.what)
-			plt.title(datalist.what+u' x número de pedidos')
-			self.save_image_data(datalist.what)
-
-		plot_datalist(w_time_data)
-		plot_datalist(t_time_data)
-		plot_datalist(o_time_data)
+		w_time_data.plot(self.save_image_data)
+		t_time_data.plot(self.save_image_data)
+		o_time_data.plot(self.save_image_data)
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
+		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
+		opt = 1
 		# print 'rotas'
 		# for veh in self.rotas:
 		# 	print veh
@@ -233,15 +238,15 @@ class Resultado:
 					end_time = tup[1]
 			w_times = np.append(w_times, ini_time - desired_time)
 			t_times = np.append(t_times, end_time - ini_time)
-			specific_data.append( (self.instancia_name+'_'+str(req[0]), id_veh_service, desired_time, ini_time, end_time) )
-		global_data = [(self.instancia_name, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), rtime, obj)]
+			specific_data.append( (n_req, v_veh, n_ins, req[0], opt, desired_time, ini_time, end_time) )
+		global_data = [(n_req, v_veh, n_ins, opt, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), rtime, obj)]
 
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		for data in global_data:
-			c.execute(''' INSERT INTO global_results VALUES (?,?,?,?,?,?,?)''', data)
+			c.execute(''' INSERT INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
 		for data in specific_data:
-			c.execute(''' INSERT INTO specific_results VALUES (?,?,?,?,?)''', data)
+			c.execute(''' INSERT INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
 
 		conn.commit()
 		conn.close()
