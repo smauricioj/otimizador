@@ -11,30 +11,22 @@ from os import path, listdir
 
 class Gerador():
 
-	def __init__(self):
-		self.n_requests = None
-		self.map_range = [[0,0], [0,0]]
-		self.time_horizon = None
-		self.dp_rate = None
+	def __init__(self, n_requests,
+					time_horizon = 30,
+					dp_rate = 0.5):
+		self.n_requests = n_requests
+		self.map_center = [5,5]
+		self.time_horizon = time_horizon
+		self.dp_rate = dp_rate
+
 		self.data = {}
 		self.data['static_data'] = {}
 		self.data['requests'] = []
 
-	def set_static_data(self, n_veh, q_veh, t_ser):
+	def set_data(self, n_veh, q_veh, t_ser):
 		self.data['static_data']['number_of_vehicles'] = n_veh
 		self.data['static_data']['max_vehicle_capacity'] = q_veh
 		self.data['static_data']['service_time'] = t_ser
-
-	def set_requests_data(self, n_requests,
-		                  x_range = [0,10], y_range = [0,10],
-		                  time_horizon = 30,
-		                  dp_rate = 0.5):
-		self.n_requests = n_requests
-		self.map_range = [x_range, y_range]
-		self.time_horizon = time_horizon
-		self.dp_rate = dp_rate
-
-	def set_requests(self):
 		self.data['requests'] = []
 
 		def cap_array(array, rng):
@@ -49,11 +41,12 @@ class Gerador():
 		desired_times = np.random.poisson(8, self.n_requests)
 		desired_times = cap_array(desired_times, [0, self.time_horizon])
 
-		points_x = np.random.poisson(5, self.n_requests)
-		points_x = cap_array(points_x, self.map_range[0])
-
-		points_y = np.random.poisson(5, self.n_requests)
-		points_y = cap_array(points_y, self.map_range[1])
+		central_point = True
+		while central_point:
+			points = np.random.poisson(5, (self.n_requests, 2))
+			if self.map_center not in points:
+				central_point = False
+		points = np.reshape(points, (2, self.n_requests))
 
 		for i in range(self.n_requests):
 			request = {}
@@ -61,8 +54,8 @@ class Gerador():
 			request['max_ride_time'] = 100
 			request['known_time'] = 0
 			request['desired_time'] = desired_times[i]
-			request['service_point_x'] = points_x[i]-5
-			request['service_point_y'] = points_y[i]-5
+			request['service_point_x'] = points[0][i]-self.map_center[0]
+			request['service_point_y'] = points[1][i]-self.map_center[1]
 			choice = np.random.random_sample()
 			if choice >= self.dp_rate:
 				request['service_type'] = 'pick'

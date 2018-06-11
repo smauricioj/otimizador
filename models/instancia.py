@@ -276,24 +276,3 @@ class Instancia:
             x,y,t,d = float(r[0]),float(r[1]),str(r[2]),int(r[3])
             data.append((id_pedido,x,y,t,d))
         return data
-
-
-
-                
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
