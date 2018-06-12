@@ -45,19 +45,28 @@ class Resultado:
 		try:
 			plt.savefig(fig_file, bbox_inches = 'tight')
 		except IOError:
-			arg = (instancia_name,fig_file_name)
+			arg = (self.instancia_name,fig_file_name)
 			print u'Arquivo {}/{} não salvo devido a IOError.'.format(*arg)
 		plt.clf()
 
 	def addTrip(self, string):
 		data = self.ins.get_pos_requests()
 
+		def aprox(value, target, rang):
+			if value > target + rang:
+				return False
+			elif value < target - rang:
+				return False
+			else:
+				return True
+
 		index, value = string.split('=')
 		var, tup = index[:-1].split('[')
 		if var == 'T':
 			i, k = [int(x) for x in tup.split(',')]
 			self.tempos[k].append((i,float(value)))
-		elif var == 'x' and float(value) == 1:
+		elif var == 'x' and aprox(float(value), 1.0, 0.0001):
+			print tup
 			i, j, k = [int(x) for x in tup.split(',')]
 			if i == 0 and j == (2 * self.ins.n) + 1:
 				pass
@@ -91,6 +100,7 @@ class Resultado:
 
 			for rota in self.rotas:
 				vertices = list(domino(rota))
+				print vertices
 				visitas += [i for i in vertices if i > 0 and i <= self.ins.n]
 
 			for i, y_pos in enumerate(list(np.linspace(9,1,self.ins.n))):
@@ -161,8 +171,9 @@ class Resultado:
 		c = conn.cursor()
 
 		class DataList(list):
-			def __init__(self, what, size):
+			def __init__(self, what, by_what, size):
 				self.what = what
+				self.by_what = by_what
 				self.mean = []
 				self.std = []
 				for _ in range(size):
@@ -179,37 +190,75 @@ class Resultado:
 					self.mean.append(value_mean)
 					self.std.append(value_std)
 				fig, ax = plt.subplots()
-				if self.what == u"Tempo de otimizacao":
-					ax.semilogy(range(1,len(self.mean)+1), self.mean, linestyle = '-', marker = '*', label = u'Média')
-					ax.semilogy(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '*', label = u'Std')
+				plot_marker = '*'
+				if self.what.split(' ')[-1] != u"veh":
+					if 'processamento' in self.what:
+						boxplot_sym = ''
+						plot_marker = ''
+						method = ax.semilogy
+						plt.grid(True, which = 'minor', ls = ':')
+						plt.grid(True, which = 'major', ls = '-')
+						y_label = self.what + u" (s)"
+					else:
+						plt.grid(True, which = 'major', ls = ':')
+						method = ax.plot
+						boxplot_sym = '+'
+						y_label = self.what
 				else:
-					ax.plot(range(1,len(self.mean)+1), self.mean, linestyle = '-', marker = '*', label = u'Média')
-					ax.plot(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '*', label = u'Std')
-				plt.grid(True, which = 'major', ls = '-')		
-				plt.grid(True, which = 'minor')
+					method = ax.plot
+					y_label = ' '.join(self.what.split(' ')[0:-2])
+					plt.grid(True, which = 'major', ls = ':')
+					boxplot_sym = '+'	
+				method(range(1,len(self.mean)+1), self.mean,
+						linestyle = ' ', marker = plot_marker,
+						markersize = 10, label = u'Média')
+				# method(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '', label = u'Std')
+				xmin, xmax = 0, 1000
+				xmin_update = False
+				for i, x in enumerate(self):
+					if x != []:
+						if not xmin_update:
+							xmin_update = True
+							xmin = i + 1
+						else:
+							xmax = i + 1
+				ax.boxplot([x for x in self if x != []],
+							notch = False,
+							sym = boxplot_sym,
+							positions = range(xmin,xmax+1))
 				plt.xlabel(u"Número de pedidos")
-				plt.ylabel(self.what)
-				plt.title(self.what+u' x número de pedidos')
-				plt.legend()
+				plt.ylabel(y_label)
+				# plt.title(self.what+u' x número de pedidos')
+				plt.legend( loc='best', ncol=1, shadow=True,
+			             	fancybox=True, numpoints = 1)
 				save_method(self.what)
 
-		w_time_data = DataList(u"Tempo de espera", 10)
-		t_time_data = DataList(u"Tempo de viagem", 10)
-		o_time_data = DataList(u"Tempo de otimizacao", 10)
+		for n_veh_plot in range(1,5):
+			w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 10)
+			t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 10)
+			t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 10)
 
-		for row in c.execute("SELECT * FROM specific_results"):
-			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-			if n_req != 0 and n_veh == 4:
-				w_time_data[n_req-1].append(i_time - d_time)
-				t_time_data[n_req-1].append(e_time - i_time)
+			for row in c.execute("SELECT * FROM specific_results"):
+				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+				t_requ_data[n_req-1].append(d_time)
+				if n_req != 0 and n_veh == n_veh_plot:
+					w_time_data[n_req-1].append(i_time - d_time)
+					t_time_data[n_req-1].append(e_time - i_time)
+
+			w_time_data.plot(self.save_image_data)
+			t_time_data.plot(self.save_image_data)
+			t_requ_data.plot(self.save_image_data)
+		
+		o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 10)
+
 		for row in c.execute("SELECT * FROM global_results"):
 			n_req, runtime = row[0], row[8]
 			if n_req != 0:
 				o_time_data[n_req-1].append(runtime)
 
-		w_time_data.plot(self.save_image_data)
-		t_time_data.plot(self.save_image_data)
 		o_time_data.plot(self.save_image_data)
+
+
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
@@ -244,9 +293,9 @@ class Resultado:
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		for data in global_data:
-			c.execute(''' INSERT INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
+			c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
 		for data in specific_data:
-			c.execute(''' INSERT INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
+			c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
 
 		conn.commit()
 		conn.close()

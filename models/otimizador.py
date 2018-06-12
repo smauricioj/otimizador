@@ -5,15 +5,15 @@ Created on Tue May 22 16:08:34 2018
 @author: Sergio P.
 """
 from gurobipy import Model, GRB, quicksum
+from traceback import format_exc
 
 from instancia import Instancia
-from resultado import Resultado
+import resultado
 
 class Otimizador:
 
 	def __init__(self, ins_id):
-	    self.ins = Instancia('{}.json'.format(ins_id))
-	    self.res = Resultado(self.ins)
+		self.ins = Instancia('{}.json'.format(ins_id))
 
 	def begin(self):
 		M = GRB.INFINITY
@@ -32,9 +32,9 @@ class Otimizador:
 		instantes = {(i,k):0   for i in locais for k in veiculos}
 		carga     = {(i,k):0   for i in locais for k in veiculos}
 		             
-		x = mod.addVars(viagens,   lb=0.0, ub=1.0, vtype=GRB.INTEGER,    name="x")
-		T = mod.addVars(instantes, lb=0.0,         vtype=GRB.CONTINUOUS, name="T")
-		u = mod.addVars(carga,     lb=0.0,         vtype=GRB.INTEGER,    name="u")
+		x = mod.addVars(viagens,           vtype=GRB.BINARY,     name="x")
+		T = mod.addVars(instantes, lb=0.0, vtype=GRB.CONTINUOUS, name="T")
+		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
 		exp += 0.25*quicksum(x[ijk] * tau[ij]
@@ -126,10 +126,20 @@ class Otimizador:
 		mod.optimize()
 		print('Obj: %g' %mod.objVal)
 		print('Runtime: %g' %mod.runtime)
-		for v in mod.getVars():
-			# if v.x != 0:
-				# print v.varName, ':', v.x
-			self.res.addTrip('{}={}'.format(v.varName, v.x))
-		self.res.fig_requests()
-		self.res.fig_routes()
+		deu = False
+		while not deu:
+			self.res = resultado.Resultado(self.ins)
+			for v in mod.getVars():
+				# print v.varName, ' : ', v.x
+				self.res.addTrip('{}={}'.format(v.varName, v.x))
+			self.res.fig_requests()
+			self.res.fig_routes()
+			deu = True
+			# try:
+			# 	self.res.fig_routes()
+			# 	deu = True
+			# except Exception:
+			# 	print format_exc()
+			# 	raw_input('Arrume e aperte enter, you dumass')
+			# 	reload(resultado)
 		self.res.result_data_DB(mod.runtime, mod.objVal)
