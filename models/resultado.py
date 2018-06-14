@@ -13,6 +13,80 @@ from math import cos, sin
 from json import loads, dumps
 from sqlite3 import connect
 
+class DataList(list):
+	def __init__(self, what, by_what, size,
+		         y_label_after = '', boxplot_sym = '+',
+		         minor_ticks = False, log_y = False):
+		self.what = what
+		self.by_what = by_what
+
+		self.mean = {}
+		self.mean['data'] = []
+		self.mean['plot_marker'] = '*'
+
+		self.std = {}
+		self.std['data'] = []
+		self.std['plot_marker'] = 's'
+
+		for _ in range(size):
+			self.append([])
+
+		self.y_label_append = ['', y_label_after]
+		if self.what.split(' ')[-1] == 'veh':
+			self.y_label = ' '.join(self.what.split(' ')[0:-2])
+		else:
+			self.y_label = self.what
+		self.y_label += self.y_label_append[1]
+
+		self.x_label_append = ['', '']
+		self.x_label = self.by_what
+
+		self.xrange = [-1000, 1000]
+
+		self.minor_ticks = minor_ticks
+		self.log_y = log_y
+		self.boxplot_sym = boxplot_sym
+
+	def plot(self, save_method):
+		fig, ax = plt.subplots()
+
+		xrange_update = False
+		for i, data in enumerate(self):
+			if len(data) == 0:
+				value_mean = None
+				value_std = None
+			else:
+				value_mean = np.array(data).mean()
+				value_std = np.array(data).std()
+				if not xrange_update:
+					xrange_update = True
+					self.xrange[0] = i
+				self.xrange[1] = i
+			self.mean['data'].append(value_mean)
+			self.std['data'].append(value_std)
+
+		if self.log_y:
+			plt.grid(True, which = 'minor', ls = ':')
+			plt.grid(True, which = 'major', ls = '-')
+			method = ax.semilogy
+		else:
+			plt.grid(True, which = 'major', ls = ':')
+			method = ax.plot
+
+		method(range(0,len(self.mean['data'])), self.mean['data'],
+				linestyle = ' ', marker = self.mean['plot_marker'],
+				markersize = 10, label = u'Média')
+
+		ax.boxplot(self[self.xrange[0]:self.xrange[1]+1],
+					notch = False,
+					sym = self.boxplot_sym,
+					positions = range(self.xrange[0],self.xrange[1]+1))
+		plt.xlabel(self.x_label)
+		plt.ylabel(self.y_label)
+		plt.legend( loc='best', ncol=1, shadow=True,
+					fancybox=True, numpoints = 1)
+		save_method(self.what)
+
 class Resultado:
 	
 	def __init__(self, ins):
@@ -108,7 +182,10 @@ class Resultado:
 				pos[visitas[i]+self.ins.n] = [6, y_pos]
 
 		G.add_nodes_from(range((2 * self.ins.n)+2))
-		draw_networkx_nodes(G, pos, ax = ax)
+		if self.ins.n <= 10:
+			draw_networkx_nodes(G, pos, ax = ax)
+		else:
+			draw_networkx_nodes(G, pos, ax = ax, node_size = 200)
 		draw_networkx_labels(G, pos)
 		for id_vei, route in enumerate(self.rotas):
 			G.add_edges_from(route)
@@ -170,106 +247,47 @@ class Resultado:
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
-		class DataList(list):
-			def __init__(self, what, by_what, size):
-				self.what = what
-				self.by_what = by_what
-				self.mean = []
-				self.std = []
-				for _ in range(size):
-					self.append([])
+		# t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
+		# for n_veh_plot in range(1,5):
+		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
 
-			def plot(self, save_method):
-				for data in self:
-					if len(data) == 0:
-						value_mean = None
-						value_std = None
-					else:
-						value_mean = np.array(data).mean()
-						value_std = np.array(data).std()
-					self.mean.append(value_mean)
-					self.std.append(value_std)
-				fig, ax = plt.subplots()
-				plot_marker = '*'
-				if self.what.split(' ')[-1] != u"veh":
-					if 'processamento' in self.what:
-						boxplot_sym = ''
-						plot_marker = ''
-						method = ax.semilogy
-						plt.grid(True, which = 'minor', ls = ':')
-						plt.grid(True, which = 'major', ls = '-')
-						y_label = self.what + u" (s)"
-					else:
-						plt.grid(True, which = 'major', ls = ':')
-						method = ax.plot
-						boxplot_sym = '+'
-						y_label = self.what
-				else:
-					method = ax.plot
-					y_label = ' '.join(self.what.split(' ')[0:-2])
-					plt.grid(True, which = 'major', ls = ':')
-					boxplot_sym = '+'	
-				method(range(1,len(self.mean)+1), self.mean,
-						linestyle = ' ', marker = plot_marker,
-						markersize = 10, label = u'Média')
-				# method(range(1,len(self.std)+1), self.std, linestyle = '-', marker = '', label = u'Std')
-				xmin, xmax = 0, 1000
-				xmin_update = False
-				for i, x in enumerate(self):
-					if x != []:
-						if not xmin_update:
-							xmin_update = True
-							xmin = i + 1
-						else:
-							xmax = i + 1
-				ax.boxplot([x for x in self if x != []],
-							notch = False,
-							sym = boxplot_sym,
-							positions = range(xmin,xmax+1))
-				plt.xlabel(u"Número de pedidos")
-				plt.ylabel(y_label)
-				# plt.title(self.what+u' x número de pedidos')
-				plt.legend( loc='best', ncol=1, shadow=True,
-			             	fancybox=True, numpoints = 1)
-				save_method(self.what)
+		# 	for row in c.execute("SELECT * FROM specific_results"):
+		# 		n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+		# 		if n_req != 0:
+		# 			t_requ_data[n_req].append(d_time)
+		# 			if n_veh == n_veh_plot:
+		# 				w_time_data[n_req].append(i_time - d_time)
+		# 				t_time_data[n_req].append(e_time - i_time)
 
-		for n_veh_plot in range(1,5):
-			w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 10)
-			t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 10)
-			t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 10)
-
-			for row in c.execute("SELECT * FROM specific_results"):
-				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-				t_requ_data[n_req-1].append(d_time)
-				if n_req != 0 and n_veh == n_veh_plot:
-					w_time_data[n_req-1].append(i_time - d_time)
-					t_time_data[n_req-1].append(e_time - i_time)
-
-			w_time_data.plot(self.save_image_data)
-			t_time_data.plot(self.save_image_data)
-			t_requ_data.plot(self.save_image_data)
+		# 	w_time_data.plot(self.save_image_data)
+		# 	t_time_data.plot(self.save_image_data)
+		# t_requ_data.plot(self.save_image_data)
 		
-		o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 10)
+		# o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
 
-		for row in c.execute("SELECT * FROM global_results"):
-			n_req, runtime = row[0], row[8]
-			if n_req != 0:
-				o_time_data[n_req-1].append(runtime)
+		# for row in c.execute("SELECT * FROM global_results"):
+		# 	n_req, runtime = row[0], row[8]
+		# 	if n_req != 0:
+		# 		o_time_data[n_req].append(runtime)
 
-		o_time_data.plot(self.save_image_data)
+		# o_time_data.plot(self.save_image_data)
 
+		# e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 50, '', '')
 
+		# for row in c.execute("SELECT * FROM specific_results"):
+		# 	n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+		# 	if n_req != 0:
+		# 		if d_time == 0:
+		# 		e_time_data[int(d_time)].append(i_time - d_time)
+		# e_time_data.plot(self.save_image_data)
+
+		conn.close()
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
 		opt = 1
-		# print 'rotas'
-		# for veh in self.rotas:
-		# 	print veh
-		# print 'tempos'
-		# for veh in self.tempos:
-		# 	print veh
 		w_times = np.array([])
 		t_times = np.array([])
 		specific_data = []

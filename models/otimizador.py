@@ -84,10 +84,6 @@ class Otimizador:
 		                   
 		        if i in origens:
 					delta_menos_destino = [b for (a,b) in arcos if a == i+n]
-					# print '-'*40
-					# print 'origem: ',i
-					# print 'lista origem:  ',[a for a in viagens if a[0] == i and a[1] in delta_menos and a[2] == k]
-					# print 'lista destino:  ',[a for a in viagens if a[0] == i+n and a[1] in delta_menos_destino and a[2] == k]
 					n_visitas = quicksum(x[ijk] for ijk in viagens
 										 if ijk[0] == i
 										 and ijk[1] in delta_menos
@@ -129,17 +125,22 @@ class Otimizador:
 		deu = False
 		while not deu:
 			self.res = resultado.Resultado(self.ins)
-			for v in mod.getVars():
-				# print v.varName, ' : ', v.x
-				self.res.addTrip('{}={}'.format(v.varName, v.x))
-			self.res.fig_requests()
-			self.res.fig_routes()
-			deu = True
-			# try:
-			# 	self.res.fig_routes()
-			# 	deu = True
-			# except Exception:
-			# 	print format_exc()
-			# 	raw_input('Arrume e aperte enter, you dumass')
-			# 	reload(resultado)
-		self.res.result_data_DB(mod.runtime, mod.objVal)
+			try:
+				a = mod.getVars()[0].x
+			except:
+				pass
+			else:
+				for v in mod.getVars():
+					# print v.varName, ' : ', v.x
+					self.res.addTrip('{}={}'.format(v.varName, v.x))
+				self.res.fig_requests()
+				self.res.fig_routes()
+				deu = True
+				# try:
+				# 	self.res.fig_routes()
+				# 	deu = True
+				# except Exception:
+				# 	print format_exc()
+				# 	raw_input('Arrume e aperte enter, you dumass')
+				# 	reload(resultado)
+			self.res.result_data_DB(mod.runtime, mod.objVal)
