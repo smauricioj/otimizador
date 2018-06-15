@@ -53,15 +53,10 @@ class Otimizador:
 		    delta_mais  = [a for (a,b) in arcos if b == i]
 		    delta_menos = [b for (a,b) in arcos if a == i]
 
-		    # print '-'*40
-		    # print 'origem: ',i
-		    # print 'lista: ',[a for a in viagens if a[0] == i and a[1] in delta_menos]
-
 		    n_visitas = quicksum(x[ijk] for ijk in viagens
 		    	                 if ijk[1] in delta_menos
 		    	                 and ijk[0] == i)
 
-		    # Eq. 1.5
 		    if i == 0:
 		        mod.addConstr( n_visitas == m )
 		    elif i != 2*n+1:
@@ -74,7 +69,6 @@ class Otimizador:
 		        sum_entrada = quicksum( x[ijk] for ijk in [(j,i,k) for j in delta_mais] )
 		        sum_saida = quicksum( x[ijk] for ijk in [(i,j,k) for j in delta_menos] )
 		        
-		        # Eq. 1.6
 		        if i == 2*n+1:
 		            mod.addConstr( sum_saida - sum_entrada == -1 )
 		        elif i == 0:
@@ -94,7 +88,6 @@ class Otimizador:
 						                         and ijk[2] == k)
 					dk = (i+n,k)
 
-					# Eq. 1.7
 					mod.addConstr( n_visitas == n_visitas_destino )
 					mod.addConstr( T[ik] >= t[i])
 					mod.addConstr( T[dk] >= T[ik] )
@@ -107,10 +100,8 @@ class Otimizador:
 		        ik, jk = (i,k), (j,k)
 		        ijk = (i,j,k)
 
-		        # Eq. 1.9
 		        mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*1000 )
 		        
-		        # Eq. 1.8
 		        mod.addConstr( u[ik] + q[i] - u[jk] <= (1 - x[ijk])*Q )
 		        
 		for k in veiculos:   
@@ -122,25 +113,14 @@ class Otimizador:
 		mod.optimize()
 		print('Obj: %g' %mod.objVal)
 		print('Runtime: %g' %mod.runtime)
-		deu = False
-		while not deu:
-			self.res = resultado.Resultado(self.ins)
-			try:
-				a = mod.getVars()[0].x
-			except:
-				pass
-			else:
-				for v in mod.getVars():
-					# print v.varName, ' : ', v.x
-					self.res.addTrip('{}={}'.format(v.varName, v.x))
-				self.res.fig_requests()
-				self.res.fig_routes()
-				deu = True
-				# try:
-				# 	self.res.fig_routes()
-				# 	deu = True
-				# except Exception:
-				# 	print format_exc()
-				# 	raw_input('Arrume e aperte enter, you dumass')
-				# 	reload(resultado)
+		self.res = resultado.Resultado(self.ins)
+		try:
+			a = mod.getVars()[0].x
+		except:
+			pass
+		else:
+			for v in mod.getVars():
+				self.res.add_trip('{}={}'.format(v.varName, v.x))
+			self.res.fig_requests()
+			self.res.fig_routes()
 			self.res.result_data_DB(mod.runtime, mod.objVal)

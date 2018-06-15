@@ -123,7 +123,7 @@ class Resultado:
 			print u'Arquivo {}/{} não salvo devido a IOError.'.format(*arg)
 		plt.clf()
 
-	def addTrip(self, string):
+	def add_trip(self, string):
 		data = self.ins.get_pos_requests()
 
 		def aprox(value, target, rang):
@@ -140,7 +140,6 @@ class Resultado:
 			i, k = [int(x) for x in tup.split(',')]
 			self.tempos[k].append((i,float(value)))
 		elif var == 'x' and aprox(float(value), 1.0, 0.0001):
-			print tup
 			i, j, k = [int(x) for x in tup.split(',')]
 			if i == 0 and j == (2 * self.ins.n) + 1:
 				pass
@@ -174,7 +173,6 @@ class Resultado:
 
 			for rota in self.rotas:
 				vertices = list(domino(rota))
-				print vertices
 				visitas += [i for i in vertices if i > 0 and i <= self.ins.n]
 
 			for i, y_pos in enumerate(list(np.linspace(9,1,self.ins.n))):
@@ -247,40 +245,39 @@ class Resultado:
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
-		# t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
-		# for n_veh_plot in range(1,5):
-		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
-		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+		t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
+		for n_veh_plot in range(1,5):
+			w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+			t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
 
-		# 	for row in c.execute("SELECT * FROM specific_results"):
-		# 		n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-		# 		if n_req != 0:
-		# 			t_requ_data[n_req].append(d_time)
-		# 			if n_veh == n_veh_plot:
-		# 				w_time_data[n_req].append(i_time - d_time)
-		# 				t_time_data[n_req].append(e_time - i_time)
+			for row in c.execute("SELECT * FROM specific_results"):
+				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+				if n_req != 0:
+					t_requ_data[n_req].append(d_time)
+					if n_veh == n_veh_plot:
+						w_time_data[n_req].append(i_time - d_time)
+						t_time_data[n_req].append(e_time - i_time)
 
-		# 	w_time_data.plot(self.save_image_data)
-		# 	t_time_data.plot(self.save_image_data)
-		# t_requ_data.plot(self.save_image_data)
+			w_time_data.plot(self.save_image_data)
+			t_time_data.plot(self.save_image_data)
+		t_requ_data.plot(self.save_image_data)
 		
-		# o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
+		o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
 
-		# for row in c.execute("SELECT * FROM global_results"):
-		# 	n_req, runtime = row[0], row[8]
-		# 	if n_req != 0:
-		# 		o_time_data[n_req].append(runtime)
+		for row in c.execute("SELECT * FROM global_results"):
+			n_req, runtime = row[0], row[8]
+			if n_req != 0:
+				o_time_data[n_req].append(runtime)
 
-		# o_time_data.plot(self.save_image_data)
+		o_time_data.plot(self.save_image_data)
 
-		# e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 50, '', '')
+		e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 50, '', '')
 
-		# for row in c.execute("SELECT * FROM specific_results"):
-		# 	n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-		# 	if n_req != 0:
-		# 		if d_time == 0:
-		# 		e_time_data[int(d_time)].append(i_time - d_time)
-		# e_time_data.plot(self.save_image_data)
+		for row in c.execute("SELECT * FROM specific_results"):
+			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+			if n_req != 0:
+				e_time_data[int(d_time)].append(i_time - d_time)
+		e_time_data.plot(self.save_image_data)
 
 		conn.close()
 
