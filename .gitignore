@@ -4,7 +4,6 @@ gurobi.log
 # Resultados
 resultados/
 models/instancias/
-*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
