@@ -20,3 +20,26 @@ CREATE TABLE specific_results(
 	fim_time REAL,
 	PRIMARY KEY(n_req, n_veh, n_ins, id_req, opt)
 )
+
+CREATE TABLE instances(
+	n_req INTEGER NOT NULL,
+	n_veh INTEGER NOT NULL,
+	n_ins INTEGER NOT NULL,
+	service_time REAL,
+	number_of_vehicles INTEGER,
+	max_vehicle_capacity INTEGER,
+	PRIMARY KEY(n_req, n_veh, n_ins)
+)
+
+CREATE TABLE requests(
+	n_req INTEGER NOT NULL,
+	n_veh INTEGER NOT NULL,
+	n_ins INTEGER NOT NULL,
+	req_id INTEGER NOT NULL,
+    service_type TEXT NOT NULL,
+    desired_time INTEGER NOT NULL,
+    known_time INTEGER NOT NULL,
+    service_point_x INTEGER NOT NULL,
+    service_point_y INTEGER NOT NULL,
+    PRIMARY KEY(n_req, n_veh, n_ins, req_id)
+)

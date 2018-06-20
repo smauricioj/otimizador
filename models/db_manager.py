@@ -19,8 +19,11 @@ class Db_manager:
 	def close(self):
 		return self.conn.close()
 
-	def execute_script(self, script_file_name):
+	def execute_script(self, script_file_name, many = None):
 		with open(path.join(self.files_path, script_file_name), 'r') as file:
 			data = file.read()
 			file.close()
-		return self.c.execute(data)
+		if not many:
+			return self.c.execute(data)
+		else:
+			return self.c.executemany(data, many)
