@@ -114,13 +114,11 @@ class Otimizador:
 		print('Obj: %g' %mod.objVal)
 		print('Runtime: %g' %mod.runtime)
 		self.res = resultado.Resultado(self.ins)
-		try:
-			a = mod.getVars()[0].x
-		except:
-			pass
-		else:
+		if mod.objVal <= 100000:
 			for v in mod.getVars():
 				self.res.add_trip('{}={}'.format(v.varName, v.x))
 			self.res.fig_requests()
 			self.res.fig_routes()
 			self.res.result_data_DB(mod.runtime, mod.objVal)
+		else:
+			print 'deu nada, só vai'

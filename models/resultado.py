@@ -12,10 +12,12 @@ from os import path, makedirs
 from math import cos, sin
 from json import loads, dumps
 from sqlite3 import connect
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 class DataList(list):
 	def __init__(self, what, by_what, size,
-		         y_label_after = '', boxplot_sym = '+',
+		         y_label_after = '', boxplot_sym = '',
 		         minor_ticks = False, log_y = False):
 		self.what = what
 		self.by_what = by_what
@@ -66,25 +68,41 @@ class DataList(list):
 			self.std['data'].append(value_std)
 
 		if self.log_y:
-			plt.grid(True, which = 'minor', ls = ':')
 			plt.grid(True, which = 'major', ls = '-')
-			method = ax.semilogy
+			ax.set_yscale('log')
 		else:
 			plt.grid(True, which = 'major', ls = ':')
-			method = ax.plot
 
-		method(range(0,len(self.mean['data'])), self.mean['data'],
-				linestyle = ' ', marker = self.mean['plot_marker'],
-				markersize = 10, label = u'Média')
-
-		ax.boxplot(self[self.xrange[0]:self.xrange[1]+1],
+		meanpointprops = dict(marker = '*',
+							  markeredgecolor = 'k',
+							  markerfacecolor = 'purple',
+							  markersize = 12)
+		boxprops = dict(linewidth = 1.5, color = 'k')
+		medianprops = dict(linewidth = 1.5, color = 'y')
+		whiskerprops = dict(linewidth = 1, color = 'k', linestyle = '-')
+		ax.boxplot( self[self.xrange[0]:self.xrange[1]+1],
 					notch = False,
 					sym = self.boxplot_sym,
-					positions = range(self.xrange[0],self.xrange[1]+1))
+					positions = range(self.xrange[0],self.xrange[1]+1),
+					showmeans = True,
+					meanline = False,
+					meanprops = meanpointprops,
+					boxprops = boxprops,
+					medianprops = medianprops,
+					whiskerprops = whiskerprops )
+		
+		meanpointprops['label'] = u'Média'
+		meanpointprops['color'] = 'w'
+		medianprops['label'] = u'Mediana'
+		element_handle = [Line2D([0],[0],**meanpointprops),
+						  Line2D([0],[0],**medianprops)]
+		plt.legend( handles = element_handle,
+					loc=2, ncol=1, shadow=True,
+					fancybox=True, numpoints = 1)
+
 		plt.xlabel(self.x_label)
 		plt.ylabel(self.y_label)
-		plt.legend( loc='best', ncol=1, shadow=True,
-					fancybox=True, numpoints = 1)
+
 		save_method(self.what)
 
 class Resultado:
@@ -120,7 +138,7 @@ class Resultado:
 			plt.savefig(fig_file, bbox_inches = 'tight')
 		except IOError:
 			arg = (self.instancia_name,fig_file_name)
-			print u'Arquivo {}/{} não salvo devido a IOError.'.format(*arg)
+			print u'Arquivo {}/{} nao salvo devido a IOError.'.format(*arg)
 		plt.clf()
 
 	def add_trip(self, string):
@@ -246,7 +264,7 @@ class Resultado:
 		c = conn.cursor()
 
 		t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
-		for n_veh_plot in range(1,5):
+		for n_veh_plot in range(4,5):
 			w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
 			t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
 
@@ -271,7 +289,7 @@ class Resultado:
 
 		o_time_data.plot(self.save_image_data)
 
-		e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 50, '', '')
+		e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 100, '', '')
 
 		for row in c.execute("SELECT * FROM specific_results"):
 			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
