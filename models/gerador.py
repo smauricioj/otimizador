@@ -11,12 +11,9 @@ from os import path, listdir
 
 class Gerador():
 
-	def __init__(self, n_requests,
-					time_horizon = 30,
-					dp_rate = 0.5):
+	def __init__(self, n_requests, dp_rate = 0.5):
 		self.n_requests = n_requests
 		self.map_center = [5,5]
-		self.time_horizon = time_horizon
 		self.dp_rate = dp_rate
 
 		self.data = {}
@@ -38,8 +35,8 @@ class Gerador():
 					r[i] = rng[0]
 			return r
 
-		desired_times = np.random.poisson(8, self.n_requests)
-		desired_times = cap_array(desired_times, [0, self.time_horizon])
+		desired_times = np.random.poisson(5, self.n_requests)
+		desired_times = np.cumsum(desired_times)
 
 		central_point = True
 		while central_point:
