@@ -124,6 +124,9 @@ class Instancia:
 
     def get_K(self):
         return range(self.m)
+
+    def get_req(self):
+        return self.__requests
         
     def get_tau(self):
         '''

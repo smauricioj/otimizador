@@ -9,7 +9,9 @@ from models.otimizador import Otimizador
 from models.gerador import Gerador
 from models.resultado import Resultado
 from models.instancia import Instancia
+from models.db_manager import Db_manager
 from getopt import getopt, GetoptError
+from sqlite3 import connect
 from sys import argv
 from os import listdir, path
 
@@ -36,21 +38,19 @@ if __name__ == "__main__":
             tabelar = True
 
     if gerar:
-        ger = Gerador()
                 
         # ################################################### #
         #                                                     #
         # PANIC BUTTON - Caso delete todas as instâncias      #
         #                                                     #
         # q_veh = 4                                           #
-        # for cen in range(20):                               #
-        #     for n_req in range(1,11):                       #
+        # for cen in range(15):                               #
+        #     for n_req in [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]:                       #
         #         n_veh = int(n_req / q_veh) + 1              #
-        #         for n_v in range(n_veh, n_veh+2):           #
-        #             ger.set_requests_data(n_req)            #
-        #             ger.set_static_data(n_v,q_veh,1)        #
-        #             ger.set_requests()                      #
-        #             ger.save_ins()                          #
+        #         for n_v in range(n_veh, n_veh+2):
+        #             ger = Gerador(n_req)           #
+        #             ger.set_data(n_v, q_veh, 1)
+        #             ger.save_ins()                         #
         # exit()                                              #
         # ################################################### #
 
@@ -97,9 +97,8 @@ if __name__ == "__main__":
                 print u'Reiniciando processo de gerar novas instâncias'
 
         for cen in range(data['n_cen']):
-            ger.set_requests_data(data['n_req'])
-            ger.set_static_data(data['n_veh'],data['q_veh'],data['t_ser'])
-            ger.set_requests()
+            ger = Gerador(data['n_req'])
+            ger.set_data(data['n_veh'], data['q_veh'], data['t_ser'])
             ger.save_ins()
 
     if otimizar:
@@ -112,59 +111,44 @@ if __name__ == "__main__":
             if r == 'all':
                 actual_path = path.dirname(path.abspath("__file__"))
                 instancia_path = path.join(actual_path,'models\\instancias')
-                print instancia_path
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
-                    Otimizador(ins_id).begin()
+                    n_req, n_veh, n_ins = [int(x) for x in ins_id.split('_')]
+                    if n_req in [3,5,7]:
+                        Otimizador(ins_id).begin()
             elif r == 'S':
                 stop = True
             else:
                 Otimizador(r).begin()
 
     if resultar:
-        Resultado(Instancia('00_00_000.json')).global_result_data()
+        Resultado(Instancia('00_00_000.json')).plot_global_result_data()
 
-    if tabelar:
-        from sqlite3 import connect
-        conn = connect('persistent_data.db')
-        c = conn.cursor()
+    if tabelar:                
+        actual_path = path.dirname(path.abspath("__file__"))
+        scripts_path = path.join(actual_path,'models\\db_scripts')
+        instancia_path = path.join(actual_path,'models\\instancias')
 
-        # c.execute('''
-        #     CREATE TABLE global_results(ins_id TEXT PRIMARY KEY ASC,
-        #                                 w_time_mean REAL, w_time_std REAL,
-        #                                 t_time_mean REAL, t_time_std REAL,
-        #                                 runtime REAL, obj REAL)
-        # ''')
+        db_man = Db_manager('persistent_data.db', scripts_path)
 
-        # c.execute('''
-        #     CREATE TABLE specific_results(ins_req_id TEXT PRIMARY KEY ASC,
-        #                                   veh_id INT, desired_time REAL,
-        #                                   ini_time REAL, fim_time REAL)
-        # ''')
-
-        # c.execute(''' DROP TABLE global_results ''')
-
-        # c.execute(''' DELETE FROM specific_results''')
-
-        # c.execute(''' VACUUM ''')
-
-        # print 'global'
-        # for row in c.execute(''' SELECT * FROM global_results '''):
+        # for row in db_man.execute("SELECT * FROM requests"):
         #     print row
-        
-        # print 'specific'
-        # with open('data.txt', 'w') as file:
-        #     count = 0
-        #     for row in c.execute(''' SELECT * FROM specific_results'''):
-        #         file.write('{}:'.format(count))
-        #         for d in row:
-        #             file.write(str(d)+', ')
-        #         file.write('\n')
-        #         count += 1
-        #     file.close()
 
-        conn.commit()
-        conn.close()
+        # exit()
+
+        # for filename in listdir(instancia_path):
+        #     print filename
+        #     ins = Instancia(filename)
+        #     n, m, n_ins = [int(x) for x in filename.split('.')[0].split('_')]
+        #     data = []
+        #     for i, req in enumerate(ins.get_req()):
+        #         data.append( (n, m, n_ins, i, req['service_type'], req['desired_time'],
+        #                                       req['known_time'], req['service_point_x'],
+        #                                       req['service_point_y']) )
+        #     db_man.execute_script('script.txt', data)
+
+        db_man.commit()
+        db_man.close()
 
     exit()

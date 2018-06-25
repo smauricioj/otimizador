@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from networkx import DiGraph, draw_networkx_nodes, draw_networkx_edges, draw_networkx_labels
 from os import path, makedirs
-from math import cos, sin
+from math import sqrt
 from json import loads, dumps
 from sqlite3 import connect
 from matplotlib.patches import Patch
@@ -17,7 +17,7 @@ from matplotlib.lines import Line2D
 
 class DataList(list):
 	def __init__(self, what, by_what, size,
-		         y_label_after = '', boxplot_sym = '',
+		         y_label_after = '', boxplot_sym = '+',
 		         minor_ticks = False, log_y = False):
 		self.what = what
 		self.by_what = by_what
@@ -263,41 +263,52 @@ class Resultado:
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
-		t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
-		for n_veh_plot in range(4,5):
-			w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
-			t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+		# for n_veh_plot in range(2,6):
+		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
 
-			for row in c.execute("SELECT * FROM specific_results"):
-				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-				if n_req != 0:
-					t_requ_data[n_req].append(d_time)
-					if n_veh == n_veh_plot:
-						w_time_data[n_req].append(i_time - d_time)
-						t_time_data[n_req].append(e_time - i_time)
+		# 	for row in c.execute("SELECT * FROM specific_results"):
+		# 		n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+		# 		if n_req != 0:
+		# 			t_requ_data[n_req].append(d_time)
+		# 			if n_veh == n_veh_plot:
+		# 				w_time_data[n_req].append(i_time - d_time)
+		# 				t_time_data[n_req].append(e_time - i_time)
 
-			w_time_data.plot(self.save_image_data)
-			t_time_data.plot(self.save_image_data)
-		t_requ_data.plot(self.save_image_data)
+		# 	w_time_data.plot(self.save_image_data)
+		# 	t_time_data.plot(self.save_image_data)
 		
-		o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
+		# o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
 
-		for row in c.execute("SELECT * FROM global_results"):
-			n_req, runtime = row[0], row[8]
+		# for row in c.execute("SELECT * FROM global_results"):
+		# 	n_req, runtime = row[0], row[8]
+		# 	if n_req != 0:
+		# 		o_time_data[n_req].append(runtime)
+
+		# o_time_data.plot(self.save_image_data)
+
+		# e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 100, '', '')
+
+		# for row in c.execute("SELECT * FROM specific_results"):
+		# 	n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+		# 	if n_req != 0:
+		# 		e_time_data[int(d_time)].append(i_time - d_time)
+		# e_time_data.plot(self.save_image_data)
+
+		# conn.close()
+
+		d_requ_data = DataList(u"Distancia do terminal", u"Número de pedidos", 25)
+		t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
+
+		for row in c.execute("SELECT * FROM requests"):
+			n_req, desired_time, x, y = row[0], row[5], row[7], row[8]
+			distance = sqrt(x**2 + y**2)
 			if n_req != 0:
-				o_time_data[n_req].append(runtime)
+				t_requ_data[n_req].append(desired_time)
+				d_requ_data[n_req].append(distance)
 
-		o_time_data.plot(self.save_image_data)
-
-		e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 100, '', '')
-
-		for row in c.execute("SELECT * FROM specific_results"):
-			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-			if n_req != 0:
-				e_time_data[int(d_time)].append(i_time - d_time)
-		e_time_data.plot(self.save_image_data)
-
-		conn.close()
+		d_requ_data.plot(self.save_image_data)
+		t_requ_data.plot(self.save_image_data)
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
