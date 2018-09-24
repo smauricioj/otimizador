@@ -18,23 +18,18 @@ from matplotlib.lines import Line2D
 class DataList(list):
 	def __init__(self, what, by_what, size,
 		         y_label_after = '', boxplot_sym = '+',
-		         minor_ticks = False, log_y = False):
+		         minor_ticks = False, log_y = False,
+		         folder = ''):
 		self.what = what
 		self.by_what = by_what
-
-		self.mean = {}
-		self.mean['data'] = []
-		self.mean['plot_marker'] = '*'
-
-		self.std = {}
-		self.std['data'] = []
-		self.std['plot_marker'] = 's'
 
 		for _ in range(size):
 			self.append([])
 
 		self.y_label_append = ['', y_label_after]
-		if self.what.split(' ')[-1] == 'veh':
+		endings_to_split = ['veh', 'req']
+		ending = self.what.split(' ')[-1]
+		if ending in endings_to_split:
 			self.y_label = ' '.join(self.what.split(' ')[0:-2])
 		else:
 			self.y_label = self.what
@@ -48,24 +43,25 @@ class DataList(list):
 		self.minor_ticks = minor_ticks
 		self.log_y = log_y
 		self.boxplot_sym = boxplot_sym
+		self.folder = folder
+
+		plt.rc('font',family='Times New Roman',size=20)
 
 	def plot(self, save_method):
 		fig, ax = plt.subplots()
 
 		xrange_update = False
+		print self.what
 		for i, data in enumerate(self):
+			print i, data
 			if len(data) == 0:
 				value_mean = None
 				value_std = None
 			else:
-				value_mean = np.array(data).mean()
-				value_std = np.array(data).std()
 				if not xrange_update:
 					xrange_update = True
 					self.xrange[0] = i
 				self.xrange[1] = i
-			self.mean['data'].append(value_mean)
-			self.std['data'].append(value_std)
 
 		if self.log_y:
 			plt.grid(True, which = 'major', ls = '-')
@@ -73,26 +69,25 @@ class DataList(list):
 		else:
 			plt.grid(True, which = 'major', ls = ':')
 
-		meanpointprops = dict(marker = '*',
-							  markeredgecolor = 'k',
-							  markerfacecolor = 'purple',
-							  markersize = 12)
+		meanpointprops = dict(linewidth = 1.5, color = 'k', linestyle = '-.')
 		boxprops = dict(linewidth = 1.5, color = 'k')
-		medianprops = dict(linewidth = 1.5, color = 'y')
+		medianprops = dict(linewidth = 1.5, color = 'k')
 		whiskerprops = dict(linewidth = 1, color = 'k', linestyle = '-')
-		ax.boxplot( self[self.xrange[0]:self.xrange[1]+1],
-					notch = False,
-					sym = self.boxplot_sym,
-					positions = range(self.xrange[0],self.xrange[1]+1),
-					showmeans = True,
-					meanline = False,
-					meanprops = meanpointprops,
-					boxprops = boxprops,
-					medianprops = medianprops,
-					whiskerprops = whiskerprops )
+		print self.xrange
+		if self.xrange != [-1000, 1000]:
+			ax.boxplot( self[self.xrange[0]:self.xrange[1]+1],
+						notch = False,
+						whis = [5, 95],
+						sym = self.boxplot_sym,
+						positions = range(self.xrange[0],self.xrange[1]+1),
+						showmeans = True,
+						meanline = True,
+						meanprops = meanpointprops,
+						boxprops = boxprops,
+						medianprops = medianprops,
+						whiskerprops = whiskerprops )
 		
 		meanpointprops['label'] = u'Média'
-		meanpointprops['color'] = 'w'
 		medianprops['label'] = u'Mediana'
 		element_handle = [Line2D([0],[0],**meanpointprops),
 						  Line2D([0],[0],**medianprops)]
@@ -103,13 +98,14 @@ class DataList(list):
 		plt.xlabel(self.x_label)
 		plt.ylabel(self.y_label)
 
-		save_method(self.what)
+		save_method(self.what, self.folder)
+		plt.close(fig)
 
 class Resultado:
 	
 	def __init__(self, ins):
 		self.ins = ins
-		self.fmt = 'pdf'
+		self.fmt = 'png'
 		self.mapa_limites = [-5,5]
 
 		self.rotas = []
@@ -121,7 +117,7 @@ class Resultado:
 		self.instancia_path = self.ins.instancia_path
 		self.instancia_name = path.split(self.instancia_path)[1].split('.')[0]
 
-	def save_image_data(self, name):	
+	def save_image_data(self, name, folder = ''):	
 		fig_file_name = '{}.{}'.format(name, self.fmt)
 
 		fig_file_path = self.instancia_path
@@ -129,6 +125,7 @@ class Resultado:
 			fig_file_path = path.dirname(fig_file_path)
 		fig_file_path = path.join(fig_file_path, 'resultados')
 		fig_file_path = path.join(fig_file_path, self.instancia_name)
+		fig_file_path = path.join(fig_file_path, folder)
 
 		if not path.isdir(fig_file_path):
 			makedirs(fig_file_path)
@@ -167,6 +164,7 @@ class Resultado:
 	def fig_routes(self):
 		fig, ax = plt.subplots()
 		colors = ['b', 'g', 'm', 'k', 'c', 'r', 'y', 'w']
+		styles = ['solid', 'dotted', 'dashed']*3
 		edge_color = []
 		pos = {}
 		G = DiGraph()
@@ -203,9 +201,19 @@ class Resultado:
 		else:
 			draw_networkx_nodes(G, pos, ax = ax, node_size = 200)
 		draw_networkx_labels(G, pos)
-		for id_vei, route in enumerate(self.rotas):
+
+		element_handle = []
+		for id_veh, route in enumerate(self.rotas):
 			G.add_edges_from(route)
-			draw_networkx_edges(G, pos, edgelist = route, edge_color = colors[id_vei])
+			print styles[id_veh]
+			draw_networkx_edges(G, pos, edgelist = route, edge_color = colors[id_veh], edge_style = styles[id_veh] )
+			props = dict(linewidth = 1.5, color = colors[id_veh],
+				         label = u'Veículo {}'.format(id_veh), linestyle = styles[id_veh])
+			line = Line2D([0],[0],**props)
+			element_handle.append(line)
+		plt.legend( handles = element_handle,
+					loc=2, ncol=1, shadow=True,
+					fancybox=True, numpoints = 1)
 		kwargs = {
 			'axis':'both',
 		    'which':'both',      # both major and minor ticks are affected
@@ -218,6 +226,7 @@ class Resultado:
 		}
 		plt.tick_params(**kwargs)		
 		plt.grid(False)
+
 		self.save_image_data('routes')
 
 	def fig_requests(self):
@@ -252,53 +261,89 @@ class Resultado:
 		plt.grid(True)
 
 		leg = plt.legend([drops, picks, center],
-						 ['drops', 'picks', 'center'],
+						 ['levar', 'buscar', u'estação'],
 			             loc='best', ncol=1, shadow=True,
 			             fancybox=True, numpoints = 1)
 		leg.get_frame().set_alpha(0.5)
 		
 		self.save_image_data('requests')
+		plt.close(fig)
 
 	def plot_global_result_data(self):
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
-		# for n_veh_plot in range(2,6):
-		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot), u"Número de pedidos", 25)
-		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot), u"Número de pedidos", 25)
+		# for n_veh_plot in range(1,6):
+		# 	folder = 'Instancias de frota {}'.format(str(n_veh_plot).zfill(2))
+		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot),
+		# 		                   u"Número de pedidos", 25, folder = folder)
+		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot),
+		# 		                   u"Número de pedidos", 25, folder = folder)		
+		# 	o_time_data = DataList(u"Tempo de processamento {} veh".format(n_veh_plot),
+		# 		                   u"Número de pedidos", 25, ' (s)', '', True, True,
+		# 		                   folder = folder)
+		# 	r_time_data = DataList(u"Razao tempo de viagem real e ideal {} veh".format(n_veh_plot),
+		# 						   u"Número de pedidos", 25, folder = folder)
 
+		# 	travel_ratio_dict = {}
 		# 	for row in c.execute("SELECT * FROM specific_results"):
 		# 		n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-		# 		if n_req != 0:
-		# 			t_requ_data[n_req].append(d_time)
-		# 			if n_veh == n_veh_plot:
-		# 				w_time_data[n_req].append(i_time - d_time)
-		# 				t_time_data[n_req].append(e_time - i_time)
+		# 		if n_veh == n_veh_plot and n_req != 0:
+		# 			travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id)
+		# 			travel_ratio_dict[travel_ratio_dict_key] = []
+		# 			travel_ratio_dict[travel_ratio_dict_key].append(e_time - i_time)
+		# 			w_time_data[n_req].append(i_time - d_time)
+		# 			t_time_data[n_req].append(e_time - i_time)
+
+		# 	for row in c.execute('''SELECT * FROM requests'''):
+		# 		n_req, n_veh, n_ins, req_id, x, y = row[0], row[1], row[2], row[3], row[7], row[8]
+		# 		if n_veh == n_veh_plot and n_req != 0:
+		# 			distance = sqrt(x**2 + y**2)
+		# 			travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id+1)
+		# 			try:
+		# 				travel_ratio_dict[travel_ratio_dict_key].append(distance)
+		# 			except KeyError:
+		# 				pass
+
+		# 	# for k, v in travel_ratio_dict.iteritems():
+		# 	# 	print k, v
+		# 	# 	# try:
+		# 	# 	if v[0] >= v[1] and v[1] != 0:
+		# 	# 		r_time_data[int(k.split('_')[0])].append(v[0]/v[1])
+		# 	# 	# except ValueError:
+		# 	# 		# pass
+
+		# 	for row in c.execute("SELECT * FROM global_results"):
+		# 		n_req, n_veh, runtime = row[0], row[1], row[8]
+		# 		if n_veh == n_veh_plot and n_req != 0:
+		# 			o_time_data[n_req].append(runtime)
 
 		# 	w_time_data.plot(self.save_image_data)
 		# 	t_time_data.plot(self.save_image_data)
-		
-		# o_time_data = DataList(u"Tempo de processamento", u"Número de pedidos", 25, ' (s)', '', True, True)
+		# 	o_time_data.plot(self.save_image_data)
+		# 	# r_time_data.plot(self.save_image_data)
 
-		# for row in c.execute("SELECT * FROM global_results"):
-		# 	n_req, runtime = row[0], row[8]
-		# 	if n_req != 0:
-		# 		o_time_data[n_req].append(runtime)
+		for n_req_plot in range(2,15):
+			folder = 'Instancias de req {}'.format(str(n_req_plot).zfill(2))
+			w_time_data = DataList(u"Tempo de espera {} req".format(n_req_plot),
+				                   u"Frota veicular", 25, folder = folder)
+			t_time_data = DataList(u"Tempo de viagem {} req".format(n_req_plot),
+				                   u"Frota veicular", 25, folder = folder)
 
-		# o_time_data.plot(self.save_image_data)
+			for row in c.execute("SELECT * FROM specific_results"):
+				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+				if n_req == n_req_plot:
+					w_time_data[n_veh].append(i_time - d_time)
+					t_time_data[n_veh].append(e_time - i_time)
 
-		# e_time_data = DataList(u"Espera", u"Instante desejado de atendimento", 100, '', '')
+			w_time_data.plot(self.save_image_data)
+			t_time_data.plot(self.save_image_data)
 
-		# for row in c.execute("SELECT * FROM specific_results"):
-		# 	n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-		# 	if n_req != 0:
-		# 		e_time_data[int(d_time)].append(i_time - d_time)
-		# e_time_data.plot(self.save_image_data)
 
-		# conn.close()
-
-		d_requ_data = DataList(u"Distancia do terminal", u"Número de pedidos", 25)
-		t_requ_data = DataList(u"Instante desejado de atendimento", u"Número de pedidos", 25)
+		d_requ_data = DataList(u"Distancia do terminal",
+							   u"Número de pedidos", 25)
+		t_requ_data = DataList(u"Instante desejado de atendimento",
+			                   u"Número de pedidos", 25)
 
 		for row in c.execute("SELECT * FROM requests"):
 			n_req, desired_time, x, y = row[0], row[5], row[7], row[8]
@@ -309,6 +354,8 @@ class Resultado:
 
 		d_requ_data.plot(self.save_image_data)
 		t_requ_data.plot(self.save_image_data)
+
+		conn.close()
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
@@ -332,7 +379,10 @@ class Resultado:
 			w_times = np.append(w_times, ini_time - desired_time)
 			t_times = np.append(t_times, end_time - ini_time)
 			specific_data.append( (n_req, v_veh, n_ins, req[0], opt, desired_time, ini_time, end_time) )
-		global_data = [(n_req, v_veh, n_ins, opt, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), rtime, obj)]
+		global_data = [(n_req, v_veh, n_ins, opt,
+			            w_times.mean(), w_times.std(),
+			            t_times.mean(), t_times.std(),
+			            rtime, obj)]
 
 		conn = connect('persistent_data.db')
 		c = conn.cursor()

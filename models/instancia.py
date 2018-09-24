@@ -32,6 +32,10 @@ class Instancia:
         self.n = len(self.__requests)
         self.m = d['static_data']['number_of_vehicles']
         self.Q = d['static_data']['max_vehicle_capacity']
+        self.T = d['static_data']['total_time']
+        self.u_mean = d['static_data']['urgency_mean']
+        self.u_std = d['static_data']['urgency_std']
+        self.dynamism = d['static_data']['dynamism']
 
         self.deposito_x = 0
         self.deposito_y = 0
@@ -124,6 +128,15 @@ class Instancia:
 
     def get_K(self):
         return range(self.m)
+
+    def get_T(self):
+        return self.T
+
+    def get_urgency(self):
+        return self.u_mean, self.u_std
+
+    def get_dynamism(self):
+        return self.dynamism
 
     def get_req(self):
         return self.__requests

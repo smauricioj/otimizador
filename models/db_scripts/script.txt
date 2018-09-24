@@ -1,1 +1,1 @@
-REPLACE INTO requests VALUES (?,?,?,?,?,?,?,?,?)
+DELETE FROM global_results WHERE n_req = 5;

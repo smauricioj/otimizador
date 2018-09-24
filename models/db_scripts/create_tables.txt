@@ -28,6 +28,10 @@ CREATE TABLE instances(
 	service_time REAL,
 	number_of_vehicles INTEGER,
 	max_vehicle_capacity INTEGER,
+	total_time INTEGER,
+	dynamism REAL,
+	urgency_mean REAL,
+	urgency_std REAL,
 	PRIMARY KEY(n_req, n_veh, n_ins)
 )
 

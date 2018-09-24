@@ -38,6 +38,11 @@ if __name__ == "__main__":
             tabelar = True
 
     if gerar:
+
+        # ger = Gerador(40, local_path = '\\teste')
+        # ger.set_data(2, 4, 1)
+        # ger.save_ins()
+        # exit()
                 
         # ################################################### #
         #                                                     #
@@ -45,12 +50,10 @@ if __name__ == "__main__":
         #                                                     #
         # q_veh = 4                                           #
         # for cen in range(15):                               #
-        #     for n_req in [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]:                       #
-        #         n_veh = int(n_req / q_veh) + 1              #
-        #         for n_v in range(n_veh, n_veh+2):
-        #             ger = Gerador(n_req)           #
-        #             ger.set_data(n_v, q_veh, 1)
-        #             ger.save_ins()                         #
+        #     for n_req in [6, 8, 10, 12, 14]:
+        #         ger = Gerador(n_req)           #
+        #         ger.set_data(4, q_veh, 1)
+        #         ger.save_ins()                         #
         # exit()                                              #
         # ################################################### #
 
@@ -86,7 +89,7 @@ if __name__ == "__main__":
 
             valid_response = False
             while not valid_response:
-                r = raw_input('Confirma? (Y/N) > ')
+                r = upper(raw_input('Confirma? (Y/N) > '))
                 if r in ('Y','N'):
                     valid_response = True
                 else:
@@ -108,15 +111,21 @@ if __name__ == "__main__":
         stop = False
         while not stop:
             r = raw_input('Qual instancia(s) otimizar? > ')
-            if r == 'all':
+            if r.split('/')[0] == 'all':
                 actual_path = path.dirname(path.abspath("__file__"))
                 instancia_path = path.join(actual_path,'models\\instancias')
+                resultados_path = path.join(actual_path,'resultados')
+                list_resultados = listdir(resultados_path)
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
                     n_req, n_veh, n_ins = [int(x) for x in ins_id.split('_')]
-                    if n_req in [3,5,7]:
+                    if r.split('/')[1] == 'new':
+                        if ins_id not in list_resultados:
+                            Otimizador(ins_id).begin()
+                    else:
                         Otimizador(ins_id).begin()
+
             elif r == 'S':
                 stop = True
             else:
@@ -132,21 +141,29 @@ if __name__ == "__main__":
 
         db_man = Db_manager('persistent_data.db', scripts_path)
 
-        # for row in db_man.execute("SELECT * FROM requests"):
-        #     print row
-
+        # for row in db_man.execute_script('get_tables.txt'):
+        #     for v in row:
+        #         print v
         # exit()
+
+        # db_man.execute('DELETE FROM global_results WHERE n_req = 5')
+
+        # for row in db_man.execute("SELECT * FROM specific_results WHERE n_req == 12 and n_veh == 5 and n_ins = 14"):
+        #     print row
 
         # for filename in listdir(instancia_path):
         #     print filename
-        #     ins = Instancia(filename)
-        #     n, m, n_ins = [int(x) for x in filename.split('.')[0].split('_')]
-        #     data = []
-        #     for i, req in enumerate(ins.get_req()):
-        #         data.append( (n, m, n_ins, i, req['service_type'], req['desired_time'],
-        #                                       req['known_time'], req['service_point_x'],
-        #                                       req['service_point_y']) )
-        #     db_man.execute_script('script.txt', data)
+        #     if path.isfile(path.join(instancia_path, filename)):
+        #         ins = Instancia(filename)
+        #         n, m, n_ins = [int(x) for x in filename.split('.')[0].split('_')]
+        #         data = [(n, m, n_ins, 1, m, 4, ins.get_T(), ins.get_dynamism(),
+        #                                        ins.get_urgency()[0], ins.get_urgency()[1] )]
+        #         for i, req in enumerate(ins.get_req()):
+        #             data.append( (n, m, n_ins, i, req['service_type'], req['desired_time'],
+        #                                           req['known_time'], req['service_point_x'],
+        #                                           req['service_point_y']) )
+        #         print data
+        #         db_man.execute_script('script.txt', data)
 
         db_man.commit()
         db_man.close()

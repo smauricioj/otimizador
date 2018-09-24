@@ -8,13 +8,17 @@ Created on Tue May 22 16:19:23 2018
 import numpy as np
 from json import dumps
 from os import path, listdir
+import matplotlib.pyplot as plt
 
 class Gerador():
 
-	def __init__(self, n_requests, dp_rate = 0.5):
-		self.n_requests = n_requests
-		self.map_center = [5,5]
-		self.dp_rate = dp_rate
+	def __init__(self, n_total_requests, dp_rate = 0.5, local_path = ''):
+		self.n_total_requests = n_total_requests
+		self.n_drop_requests = int(round(dp_rate*n_total_requests))
+		self.n_pick_requests = n_total_requests - self.n_drop_requests
+		self.map_center = [10,10]
+		self.total_time = 120
+		self.local_instancia_path = 'models\\instancias'+str(local_path)
 
 		self.data = {}
 		self.data['static_data'] = {}
@@ -24,54 +28,101 @@ class Gerador():
 		self.data['static_data']['number_of_vehicles'] = n_veh
 		self.data['static_data']['max_vehicle_capacity'] = q_veh
 		self.data['static_data']['service_time'] = t_ser
+		self.data['static_data']['total_time'] = self.total_time
 		self.data['requests'] = []
 
-		def cap_array(array, rng):
-			r = array
-			for i, v in enumerate(array):
-				if v > rng[1]:
-					r[i] = rng[1]
-				elif v < rng[0]:
-					r[i] = rng[0]
-			return r
+		def get_requests_by_service_type(self, service_type):
 
-		desired_times = np.random.poisson(5, self.n_requests)
-		desired_times = np.cumsum(desired_times)
-
-		central_point = True
-		while central_point:
-			points = np.random.poisson(5, (self.n_requests, 2))
-			if self.map_center not in points:
-				central_point = False
-		points = np.reshape(points, (2, self.n_requests))
-
-		for i in range(self.n_requests):
-			request = {}
-			request['max_wait_time'] = 10
-			request['max_ride_time'] = 100
-			request['known_time'] = 0
-			request['desired_time'] = desired_times[i]
-			request['service_point_x'] = points[0][i]-self.map_center[0]
-			request['service_point_y'] = points[1][i]-self.map_center[1]
-			choice = np.random.random_sample()
-			if choice >= self.dp_rate:
-				request['service_type'] = 'pick'
+			if service_type == 'pick':
+				n_requests = self.n_pick_requests
 			else:
-				request['service_type'] = 'drop'
-			self.data['requests'].append(request)
+				n_requests = self.n_drop_requests
+
+			central_point = True
+			while central_point:
+				points = np.random.multivariate_normal(mean = self.map_center,
+					                                   cov = [[self.map_center[0], 0],
+					                                          [0, self.map_center[1]]],
+					                                   size = n_requests)
+				if self.map_center not in points:
+					central_point = False
+			points = np.reshape(points, (2, n_requests))
+
+			inside = False
+			rate_requests = float(self.total_time)/n_requests
+			while not inside:
+				desired_times = np.cumsum(np.random.poisson(rate_requests, n_requests))
+				if service_type == 'pick':
+					distance = 0
+				else:
+					distance = np.sqrt( (points[0][-1]**2)+(points[1][-1]**2) )
+				if desired_times[-1] + distance <= self.total_time:
+					inside = True
+
+			known_times = np.random.normal(2, 1, n_requests)
+			known_times = [max(0,a) for a in known_times]
+			known_times = desired_times - known_times
+			known_times = [round(max(0,a),2) for a in known_times]
+
+			for i in range(n_requests):
+				request = {}
+				request['max_wait_time'] = 10
+				request['max_ride_time'] = 100
+				request['known_time'] = known_times[i]
+				request['desired_time'] = desired_times[i]
+				request['service_point_x'] = round(points[0][i] - self.map_center[0], 1)
+				request['service_point_y'] = round(points[1][i] - self.map_center[1], 1)
+				request['service_type'] = service_type
+				self.data['requests'].append(request)
+
+			return desired_times, known_times
+
+		dt_p, kt_p = get_requests_by_service_type(self, 'pick')
+		dt_d, kt_d = get_requests_by_service_type(self, 'drop')
+		
+		self.data['requests'] = sorted(self.data['requests'], key = lambda k: k['desired_time'])
+
+		dt = np.append(dt_p, dt_d)
+		kt = np.append(kt_p, kt_d)
+		urgency_mean = np.mean(dt - kt)
+		urgency_std = np.std(dt - kt)
+
+		self.data['static_data']['urgency_mean'] = round(urgency_mean, 2)
+		self.data['static_data']['urgency_std'] = round(urgency_std, 2)
+
+		kt = sorted(kt)
+		delta = [ float(a_j - a_i) for a_i, a_j in zip(kt, kt[1:]) ]
+		tau = self.total_time/float(self.n_total_requests)
+		sigma, sigma_c = [], []
+		for i, delta_i in enumerate(delta):
+			sigma_c_i = tau
+			if delta_i < tau:
+				if i == 0:
+					sigma_i = tau - delta_i
+				elif i > 0:
+					sigma_i = tau - delta_i + (delta[i-1]*(tau - delta_i))/tau
+					sigma_c_i += (delta[i-1]*(tau - delta_i))/tau
+			else:
+				sigma_i = 0
+			sigma.append(sigma_i)
+			sigma_c.append(sigma_c_i)
+		dynamism = 1 - (np.cumsum(sigma)[-1]/np.cumsum(sigma_c)[-1])
+
+		self.data['static_data']['dynamism'] = round(dynamism, 2)
 
 	def save_ins(self):        	
-		n_req = str(self.n_requests).zfill(2)
+		n_req = str(self.n_total_requests).zfill(2)
 		n_veh = str(self.data['static_data']['number_of_vehicles']).zfill(2)
 
 		actual_path = path.dirname(path.abspath("__file__"))
-		instancia_path = path.join(actual_path,'models\\instancias')
+		instancia_path = path.join(actual_path,self.local_instancia_path)
 		ids = [0]
 		for file in listdir(instancia_path):
-			id_n_req, id_n_veh, id_ins = file.split('.')[0].split('_')
-			if int(id_n_req) == self.n_requests:
-				if int(id_n_veh) == self.data['static_data']['number_of_vehicles']:
-					ids.append(int(id_ins))
+			if path.isfile(path.join(instancia_path,file)):
+				id_n_req, id_n_veh, id_ins = file.split('.')[0].split('_')
+				if int(id_n_req) == self.n_total_requests:
+					if int(id_n_veh) == self.data['static_data']['number_of_vehicles']:
+						ids.append(int(id_ins))
 		id_ins = str(max(ids)+1).zfill(3)
 
 		name_file = '{}_{}_{}.json'.format(n_req,n_veh,id_ins)
