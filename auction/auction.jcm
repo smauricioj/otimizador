@@ -14,7 +14,18 @@
 
 mas auction {
 
-    agent sample_agent
+    agent client_001 : client.asl{
+    	beliefs: service_type("drop"),
+    			 service_time(1),
+    	         desired_time(29),
+    	         known_time(26),
+    	         service_point_x(1.0),
+    	         service_point_y(1.9)
+    }
+    
+    agent driver_001 : driver.asl{
+    	beliefs: capacity(4)
+    }
 
     
 
