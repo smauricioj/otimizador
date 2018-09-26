@@ -28,6 +28,7 @@ class Instancia:
             file.close()
         self.instancia_path = instancia_path
         self.__requests = d['requests']
+        self.__static_data = d['static_data']
         self.__service_time = d['static_data']['service_time']
         self.n = len(self.__requests)
         self.m = d['static_data']['number_of_vehicles']
@@ -140,6 +141,9 @@ class Instancia:
 
     def get_req(self):
         return self.__requests
+
+    def get_static_data(self):
+        return self.__static_data
         
     def get_tau(self):
         '''

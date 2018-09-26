@@ -6,6 +6,7 @@ Created on Thu Apr 19 13:14:13 2018
 """
 
 from models.otimizador import Otimizador
+from models.leilao import Leilao
 from models.gerador import Gerador
 from models.resultado import Resultado
 from models.instancia import Instancia
@@ -18,24 +19,17 @@ from os import listdir, path
 if __name__ == "__main__":
 
     try:
-        singles = 'ogrt'
+        singles = 'olgrt'
         opts, args = getopt(argv[1:],singles)
     except GetoptError as err:
         print str(err)
         exit()
-    otimizar = False
-    gerar = False
-    resultar = False
-    tabelar = False
-    for opt, opt_args in opts:
-        if opt == '-o':
-            otimizar = True
-        if opt == '-g':
-            gerar = True
-        if opt == '-r':
-            resultar = True
-        if opt == '-t':
-            tabelar = True
+    opt_list = [opt for opt, opt_args in opts]
+    otimizar = '-o' in opt_list
+    leiloar = '-l' in opt_list
+    gerar = '-g' in opt_list
+    resultar = '-r' in opt_list
+    tabelar = '-t' in opt_list
 
     if gerar:
 
@@ -120,7 +114,11 @@ if __name__ == "__main__":
                     print filename
                     ins_id = filename.split('.')[0]
                     n_req, n_veh, n_ins = [int(x) for x in ins_id.split('_')]
-                    if r.split('/')[1] == 'new':
+                    try:
+                        post_case = r.split('/')[1]
+                    except IndexError:
+                        post_case = ''
+                    if post_case == 'new':
                         if ins_id not in list_resultados:
                             Otimizador(ins_id).begin()
                     else:
@@ -130,6 +128,14 @@ if __name__ == "__main__":
                 stop = True
             else:
                 Otimizador(r).begin()
+
+    if leiloar:
+        print "#"*70
+        print "#"
+        print u"# Iniciando processo de leiloar instâncias."
+        r = raw_input('Qual instancia(s) realizar leilao? > ')
+        Leilao(r).begin()
+
 
     if resultar:
         Resultado(Instancia('00_00_000.json')).plot_global_result_data()
