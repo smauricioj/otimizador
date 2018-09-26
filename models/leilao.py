@@ -26,10 +26,10 @@ class Leilao:
 		req = self.ins.get_req()
 		static_data = self.ins.get_static_data()
 		
-		# args = 'java '
-		# args += '-classpath %JACAMO_HOME%/libs/* jacamo.infra.RunJaCaMoProject'
-		# args += '{}/auction/auction.jcm jar'.format(self.actual_path)
-		# check_call(args.split(' '), shell = True)
+		args = 'java '
+		args += '-classpath %JACAMO_HOME%/libs/* jacamo.infra.RunJaCaMoProject '
+		args += '{}/auction/auction.jcm jar'.format(self.actual_path)
+		check_call(args.split(' '), shell = True)
 
-		# args = 'java -jar {}/auction/auction.jar'.format(self.actual_path)
-		# check_call(args.split(' '), shell = True)
+		args = 'java -jar {}/auction/jacamo-auction.jar'.format(self.actual_path)
+		check_call(args.split(' '), shell = True)
