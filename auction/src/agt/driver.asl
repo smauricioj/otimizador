@@ -14,8 +14,14 @@ schedule_times([]).
 
 /* Plans */
 
-+auction(service, D)[source(A)] : true <- .send(A,tell,bid(D, math.random * 100 + 10));
-                                          .print("Respondendo").
++auction(X, Y, KT, DT)[source(A)] : true
+	<-  .send(A,tell,bid(math.random * 100 + 10)).
+	
++winner(W)[source(A)] : .my_name(N) & N = M & schedule_clients(SC)
+	<-  .print("Venci");
+		.concat(SC,[A],New_SC);
+		.abolish(schedule_clients(_));
+		+schedule_clients(New_SC).
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
