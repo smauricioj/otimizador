@@ -1,33 +1,51 @@
-/*
-    auction
-    ---------------------------
-
-    JaCaMo Project File
-
-    This file defines the initial state of the MAS (initial agents, environment, organisation, ....)
-
-    (see jacamo/doc/jcm.html for more information about what can be defined in this file)
-
-    JaCaMo <VERSION>
-    <DATE>
-*/
-
 mas auction {
 
     agent client_001 : client.asl{
     	beliefs: service_type("drop"),
     			 service_time(1),
     	         desired_time(29),
-    	         known_time(26),
+    	         known_time(4),
     	         service_point_x(1.0),
-    	         service_point_y(1.9)
+    	         service_point_y(1.9),
+    	         queue_number(1)
+    	focus: jacamo.queue
     }
     
+    agent client_002 : client.asl{
+    	beliefs: service_type("drop"),
+    			 service_time(1),
+    	         desired_time(29),
+    	         known_time(4),
+    	         service_point_x(1.0),
+    	         service_point_y(1.9),
+    	         queue_number(2)
+    	focus: jacamo.queue
+    }
+    
+    agent client_003 : client.asl{
+    	beliefs: service_type("drop"),
+    			 service_time(1),
+    	         desired_time(29),
+    	         known_time(4),
+    	         service_point_x(1.0),
+    	         service_point_y(1.9),
+    	         queue_number(3)
+    	focus: jacamo.queue
+    }    
+        
     agent driver_001 : driver.asl{
     	beliefs: capacity(4)
     }
-
     
+    agent driver_002 : driver.asl{
+    	beliefs: capacity(4)
+    }
+    
+    workspace jacamo {
+    	artifact queue: tools.Queue()
+    }
+
+    //asl-path: auction/src/agt
 
 }
 

@@ -2,23 +2,22 @@
 
 /* Initial beliefs and rules */
 
-pos_x(5).
-pos_y(5).
-velocity(1).
+init_pos_x(5).
+init_pos_y(5).
 schedule_clients([]).
 schedule_times([]).
+schedule_positions([]).
 
 /* Initial goals */
-
-// !start.
 
 /* Plans */
 
 +auction(X, Y, KT, DT)[source(A)] : true
 	<-  .send(A,tell,bid(math.random * 100 + 10)).
 	
-+winner(W)[source(A)] : .my_name(N) & N = M & schedule_clients(SC)
++winner(W)[source(A)] : .my_name(N) & N = W
 	<-  .print("Venci");
+		?schedule_clients(SC);
 		.concat(SC,[A],New_SC);
 		.abolish(schedule_clients(_));
 		+schedule_clients(New_SC).
