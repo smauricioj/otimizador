@@ -27,9 +27,6 @@ class Leilao:
 		static_data = self.ins.get_static_data()
 		
 		args = 'java '
-		args += '-classpath %JACAMO_HOME%/libs/* jacamo.infra.RunJaCaMoProject '
-		args += '{}/auction/auction.jcm jar'.format(self.actual_path)
-		check_call(args.split(' '), shell = True)
-
-		args = 'java -jar {}/auction/jacamo-auction.jar'.format(self.actual_path)
+		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
+		args += '{}/auction/auction.jcm'.format(self.actual_path)
 		check_call(args.split(' '), shell = True)
