@@ -16,17 +16,35 @@ class Leilao:
 		self.actual_path = path.dirname(path.abspath("__file__"))
 
 	def begin(self):
-		n, m, Q   = self.ins.n, self.ins.m, self.ins.Q
-		q, s, t   = self.ins.get_q(), self.ins.get_s(), self.ins.get_t()
-		W, R, tau = self.ins.get_W(), self.ins.get_R(), self.ins.get_tau()
-		arcos = tau.keys()
-		origens, destinos, locais = self.ins.get_O(), self.ins.get_D(), self.ins.get_V()
-		veiculos = self.ins.get_K()
-
 		req = self.ins.get_req()
 		static_data = self.ins.get_static_data()
+
+		jcm_text = ''' '''
+		jcm_text += 'mas auction { \n\n\t'
+		jcm_text += 'agent driver_: driver.asl {{ instances: {}}} \n\t'.format(static_data['number_of_vehicles'])
+		for i, req_data in enumerate(req):
+			req_data['queue_number'] = str(i+1)
+			req_data['counter'] = str(i+1).zfill(3)
+			snippet = '''
+	agent client_{counter}: client.asl {{
+		beliefs: service_type({service_type}),
+			     desired_time({desired_time}),
+			     known_time({known_time}),
+			     service_point_x({service_point_x}),
+			     service_point_y({service_point_y}),
+			     queue_number({queue_number})
+		focus: tools.queue
+	}}\n\n\t'''.format(**req_data)
+			jcm_text += snippet
+		jcm_text += 'workspace tools {{ artifact queue: tools.Queue() }}\n\n\t'
+		jcm_text += 'asl-path: auction/src/agt\n\n'
+		jcm_text += '}'
+
+		with open(path.join(self.actual_path,'jcm_text.jcm'), 'w') as file:
+			file.write(jcm_text)
+			file.close()
 		
-		args = 'java '
-		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
-		args += '{}/auction/auction.jcm'.format(self.actual_path)
-		check_call(args.split(' '), shell = True)
+		# args = 'java '
+		# args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
+		# args += '{}/auction/auction.jcm'.format(self.actual_path)
+		# check_call(args.split(' '), shell = True)
