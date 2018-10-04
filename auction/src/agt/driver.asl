@@ -5,6 +5,7 @@
 capacity(4).
 init_pos_x(5).
 init_pos_y(5).
+auctions_in_place([]).
 schedule_clients([]).
 schedule_times([]).
 schedule_positions([]).
@@ -13,13 +14,17 @@ schedule_positions([]).
 
 /* Plans */
 
-+auction(ST, X, Y, KT, DT)[source(A)] : true
-	<-  .send(A,tell,bid(math.random * 100 + 10))
++auction(St, X, Y, KT, DT)[source(A)] : true
+	<-  .send(A,tell,bid(math.random * 100 + 10));
+		?auctions_in_place(L);
+		.concat(L,[A],NL);
+		.abolish(auctions_in_place(_));
+		+auctions_in_place(NL)
 		.
-	
-+winner(W)[source(A)] : .my_name(N) & N = W
-	<-  .print("Venci");
-		?auction(ST, X, Y, KT, DT)[source(A)];
+		
++winner(W)[source(A)] : auctions_in_place(L) & .member(A,L) &
+						.my_name(N) & N = W
+	<-  ?auction(St, X, Y, KT, DT)[source(A)];
 		?schedule_clients(SC);
 		?schedule_times(ST);
 		?schedule_positions(SP);
@@ -34,9 +39,21 @@ schedule_positions([]).
 		.abolish(schedule_positions(_));
 		
 		+schedule_clients(New_SC);
-		+schedule_positions(New_SP)		
+		+schedule_positions(New_SP);
+		
+		!!remove_auction_in_place(A)
 		.
 
++winner(W)[source(A)] : auctions_in_place(L) & .member(A,L)
+	<-	!!remove_auction_in_place(A).
+
++!remove_auction_in_place(A) : true
+	<-	?auctions_in_place(L);
+		.delete(A,L,NL);
+		.abolish(auctions_in_place(_));
+		+auctions_in_place(NL)
+		.
+		
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
 

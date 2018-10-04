@@ -28,7 +28,8 @@
 	    	.broadcast(tell, winner(W));
 	    	inc
 		} else {
-			.print("No response, giving up");
+			.print("Not enough responses, retrying");
+			!!decide;
 		}.
 
 
