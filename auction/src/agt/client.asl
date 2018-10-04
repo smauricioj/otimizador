@@ -15,7 +15,8 @@
 		   	?service_point_y(Y);
 		   	?known_time(KT);
 		   	?desired_time(DT);
-		   	.broadcast(tell, auction(X, Y, KT, DT));
+		   	?service_type(ST)
+		   	.broadcast(tell, auction(ST, X, Y, KT, DT));
 		   	.at("now + 1 s", {+!decide}) 	   	
 	   	}.
 	   

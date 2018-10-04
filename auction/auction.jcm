@@ -1,51 +1,44 @@
 mas auction {
 
-    agent client_001 : client.asl{
+    agent client_001: client.asl{
     	beliefs: service_type("drop"),
-    			 service_time(1),
     	         desired_time(29),
     	         known_time(4),
     	         service_point_x(1.0),
     	         service_point_y(1.9),
     	         queue_number(1)
-    	focus: jacamo.queue
+    	focus: tools.queue
     }
     
-    agent client_002 : client.asl{
+    agent client_002: client.asl{
     	beliefs: service_type("drop"),
-    			 service_time(1),
     	         desired_time(29),
     	         known_time(4),
-    	         service_point_x(1.0),
-    	         service_point_y(1.9),
+    	         service_point_x(3.0),
+    	         service_point_y(0.3),
     	         queue_number(2)
-    	focus: jacamo.queue
+    	focus: tools.queue
     }
     
-    agent client_003 : client.asl{
+    agent client_003: client.asl{
     	beliefs: service_type("drop"),
-    			 service_time(1),
     	         desired_time(29),
     	         known_time(4),
     	         service_point_x(1.0),
     	         service_point_y(1.9),
     	         queue_number(3)
-    	focus: jacamo.queue
+    	focus: tools.queue
     }    
         
-    agent driver_001 : driver.asl{
-    	beliefs: capacity(4)
+    agent driver_: driver.asl{
+    	instances: 2
     }
     
-    agent driver_002 : driver.asl{
-    	beliefs: capacity(4)
-    }
-    
-    workspace jacamo {
+    workspace tools {
     	artifact queue: tools.Queue()
     }
 
-    //asl-path: auction/src/agt
+    asl-path: auction/src/agt
 
 }
 
