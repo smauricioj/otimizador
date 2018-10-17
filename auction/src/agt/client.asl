@@ -16,8 +16,8 @@
 		   	?known_time(KT);
 		   	?desired_time(DT);
 		   	?service_type(ST)
-		   	.broadcast(tell, auction(ST, X, Y, KT, DT));
-		   	.at("now + 1 s", {+!decide}) 	   	
+		   	.broadcast(tell, auction(ST, [X, Y], KT, DT));
+		   	.at("now + 100 s", {+!decide}) 	   	
 	   	}.
 	   
 +!decide : .findall(b(V,A), bid(V)[source(A)], L) &
@@ -28,7 +28,8 @@
 	    	.broadcast(tell, winner(W));
 	    	inc
 		} else {
-			.print("Not enough responses, retrying");
+			//.print("Not enough responses, retrying");
+			.wait(30)
 			!!decide;
 		}.
 
