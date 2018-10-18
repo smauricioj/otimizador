@@ -18,7 +18,8 @@ schedule([[0,0,5,5]]).
 		Value = math.random * 100 + 10;
 		// TODO: custo de inserção
 		//	jia.schedule_cost(Sch, Ip, C, St, [X, Y], KT, DT, Cost)
-		jia.schedule_cost([["oi",0,5,5],["banana",5,8,6],["ultimo",7,1,1]],[5,5],4,"drop",[1,1],5,5,A);
+		jia.schedule_cost([["oi",2,5,5],["banana",5,8,6],["ultimo",7,1,1]],[5,5],4,"drop",[1,1],1,1,Result);
+		.print(Result)
 		.send(A,tell,bid(Value));
 		?auctions_in_place(L);
 		.concat(L,[A],NL);

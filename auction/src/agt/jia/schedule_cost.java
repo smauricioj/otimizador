@@ -5,6 +5,7 @@ package jia;
 import jason.*;
 import jason.asSemantics.*;
 import jason.asSyntax.*;
+import java.util.Random;
 
 @SuppressWarnings("serial")
 public class schedule_cost extends DefaultInternalAction {
@@ -15,13 +16,12 @@ public class schedule_cost extends DefaultInternalAction {
         // execute the internal action
     	
         ts.getAg().getLogger().info("executing internal action 'jia.schedule_cost'");
-        // TODO: verificar código abaixo
-        //if (!args[args.length-2].isVar()) {
-        //	throw new JasonException("Last argument of schedule_cost is not a variable");
-        //}
+        if (!args[args.length-1].isVar()) {
+        	throw new JasonException("Last argument of schedule_cost is not a variable");
+        }
         
-        int i_pe = 0;
-        int n_e = 0;
+        int i_pe = 0; //indice do primeiro evento
+        int n_e = 0; //total de eventos
         NumberTerm kt = (NumberTerm)args[5];
         NumberTerm dt = (NumberTerm)args[6];
     	for (Term t: (ListTerm)args[0]) { // Todos os eventos da agenda
@@ -34,10 +34,56 @@ public class schedule_cost extends DefaultInternalAction {
             n_e += 1;
         }
     	
-    	int n_estrela = n_e - i_pe;    	
-    	int [][] K = new int[n_estrela][n_estrela];    	
+    	int n_estrela = n_e - i_pe; // número de espaços disponíveis
+    	double inf = Double.POSITIVE_INFINITY; // infinito
+    	double minValue = inf; // menor valor até agora
+    	double actValue = 0; // valor atual
+    	Random rand = new Random(); //máquina de randoms
+    	for (int i = 0; i < n_estrela; i ++) {
+    		// número de linhas
+    		for (int j = 0; j < n_estrela; j ++) {
+    			// número de colunas
+    			if (j < i) {
+    				// a matriz deve ser triangular superior
+    				actValue = inf;
+    			} else {
+    				// calcula o custo da inserção
+    				// TODO: calculo do kappa_ij
+    				actValue = rand.nextInt(50)+1;
+    			}
+    			
+//    			System.out.println(actValue);
+    			
+    			if (actValue < minValue) {
+    				// se o atual é menor do que o menor até agora, atualiza
+    				minValue = actValue;
+    			}
+    		}
+    	}
 
-        // everything ok, so returns true
-        return true;
+        // unifica o resultado com a variável passada
+    	return un.unifies(args[args.length-1], ASSyntax.createNumber(minValue));
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
