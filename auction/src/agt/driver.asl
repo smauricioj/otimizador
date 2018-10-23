@@ -5,7 +5,7 @@
  *     onde : c = cliente
  *            t = instante real de atendimento
  *            d = instante desejado de atendimento
- * 			  x, y = posição cartesiana de atendimento 
+ * 			  x, y = posiï¿½ï¿½o cartesiana de atendimento 
  * */
 
 capacity(4).
@@ -20,14 +20,10 @@ schedule_test([["c0",0,0,5,5],
 
 /* Plans */
 
-+auction(St, [X, Y], KT, DT)[source(A)] : true
++auction(St, X, Y, KT, DT)[source(A)] : true
 	<-  ?schedule(Sch);
 		?schedule_test(Sch_t)
-		?capacity(C);
-		?init_pos(Ip);
-		Value = math.random * 100 + 10;
-		// TODO: custo de inserção
-		jia.schedule_cost(Sch_t, [5,5], 4, "drop", [1,1], 1, 1, Result);
+		jia.schedule_cost(Sch_t, "drop", 1, 1, 1, 1, Result);
 		.print(Result)
 		.send(A,tell,bid(Result));
 		?auctions_in_place(L);
@@ -38,12 +34,11 @@ schedule_test([["c0",0,0,5,5],
 		
 +winner(W)[source(A)] : auctions_in_place(L) & .member(A,L) &
 						.my_name(N) & N = W
-	<-  ?auction(St, [X, Y], KT, DT)[source(A)];
+	<-  ?auction(St, X, Y, KT, DT)[source(A)];
 		?schedule(Sch);
-		?init_pos(Ip);
 		
-		// TODO: inserção de novos pedidos
-		//	 jia.schedule_update(Sch, St, [X, Y], DT, NewSch)
+		// TODO: inserï¿½ï¿½o de novos pedidos
+		//	 jia.schedule_update(Sch, St, X, Y, DT, NewSch)
 		
 		!!remove_auction_in_place(A)
 		.
