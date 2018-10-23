@@ -5,11 +5,9 @@
  *     onde : c = cliente
  *            t = instante real de atendimento
  *            d = instante desejado de atendimento
- * 			  x, y = posiï¿½ï¿½o cartesiana de atendimento 
+ * 			  x, y = posição cartesiana de atendimento 
  * */
 
-capacity(4).
-init_pos([5,5]).
 auctions_in_place([]).
 schedule([["c0",0,0,5,5]]).
 schedule_test([["c0",0,0,5,5],
@@ -37,7 +35,7 @@ schedule_test([["c0",0,0,5,5],
 	<-  ?auction(St, X, Y, KT, DT)[source(A)];
 		?schedule(Sch);
 		
-		// TODO: inserï¿½ï¿½o de novos pedidos
+		// TODO: inserção de novos pedidos
 		//	 jia.schedule_update(Sch, St, X, Y, DT, NewSch)
 		
 		!!remove_auction_in_place(A)
