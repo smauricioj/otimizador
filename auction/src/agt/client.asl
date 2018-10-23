@@ -5,33 +5,24 @@
 /* Initial goals */
 
 /* Plans */
-
-+tick : true
-	<-	?next(N);
-		?queue_number(QN);
-	   	if (N == QN) {
-		   	.print("Iniciando");
-		   	?service_point_x(X);
-		   	?service_point_y(Y);
-		   	?known_time(KT);
-		   	?desired_time(DT);
-		   	?service_type(ST)
-		   	.broadcast(tell, auction(ST, [X, Y], KT, DT));
-		   	.at("now + 100 s", {+!decide}) 	   	
-	   	}.
+	   	
++next(N) : queue_number(N)
+	<- 	.print("Iniciando");
+	   	?service_point_x(X);
+	   	?service_point_y(Y);
+	   	?known_time(KT);
+	   	?desired_time(DT);
+	   	?service_type(ST)
+	   	.broadcast(tell, auction(ST, [X, Y], KT, DT));
+	   	.at("now + 1 s", {+!decide}) .
 	   
-+!decide : .findall(b(V,A), bid(V)[source(A)], L) &
-           .length(L, N)
-	<- 	if (N >= 1) {
-			.min(L,b(V,W));
-	    	.print("Winner is ", W, " with ", V);
-	    	.broadcast(tell, winner(W));
-	    	inc
-		} else {
-			//.print("Not enough responses, retrying");
-			.wait(30)
-			!!decide;
-		}.
++!decide : .findall(b(V,A), bid(V)[source(A)], L) & .length(L, N) & N >= 1
+	<- 	.min(L,b(V,W));
+    	.print("Winner is ", W, " with ", V);
+    	.broadcast(tell, winner(W));
+    	inc.
+		
++!decide <-	.wait(30); !!decide.
 
 
 { include("$jacamoJar/templates/common-cartago.asl") }
