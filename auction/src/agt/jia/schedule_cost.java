@@ -19,7 +19,7 @@ public class schedule_cost extends DefaultInternalAction {
 	private double known_time = 0;
 	
 	private double kappa_ij(ListTerm Sch, int i, int j) {
-    	Random rand = new Random(); //mï¿½quina de randoms
+    	Random rand = new Random(); //máquina de randoms
     	double inf = Double.POSITIVE_INFINITY; // infinito
     	
     	ListTerm Sch_teste = Sch.cloneLT();
@@ -53,13 +53,13 @@ public class schedule_cost extends DefaultInternalAction {
         int n_e = 0;                         // total de eventos
         ListTerm Sch = (ListTerm)args[0];    // agendamento atual
         
-        StringTerm St = (StringTerm)args[1]; // tipo de serviï¿½o
+        StringTerm St = (StringTerm)args[1]; // tipo de serviço
         this.service_type = St.toString();
         
-        NumberTerm Pos_x = (NumberTerm)args[2];    // posiï¿½ï¿½o x do novo pedido
+        NumberTerm Pos_x = (NumberTerm)args[2];    // posição x do novo pedido
         this.service_position_x = Pos_x.solve();
         
-        NumberTerm Pos_y = (NumberTerm)args[3];    // posiï¿½ï¿½o y do novo pedido
+        NumberTerm Pos_y = (NumberTerm)args[3];    // posição y do novo pedido
         this.service_position_y = Pos_y.solve();
         
         NumberTerm Kt = (NumberTerm)args[4]; // instante conhecido (agora)
@@ -69,38 +69,38 @@ public class schedule_cost extends DefaultInternalAction {
         this.desired_time = Dt.solve();
         
     	for (Term t: Sch) {    // Todos os eventos da agenda
-            ListTerm event = (ListTerm)t;    // Um evento especï¿½fico
+            ListTerm event = (ListTerm)t;    // Um evento específico
             NumberTerm et = (NumberTerm)event.get(1); // instante do evento
             if ( et.solve() < Kt.solve() || et.solve() < Dt.solve()) {
-            	/* se ï¿½ passado OU anterior ao desejado,
+            	/* se é passado OU anterior ao desejado,
             	   aumenta o index do primeiro evento    */ 
             	i_pe += 1;
             }
             n_e += 1;
         }
     	
-    	int n_estrela = n_e - i_pe; // nï¿½mero de espaï¿½os disponï¿½veis
+    	int n_estrela = n_e - i_pe; // número de espaços disponíveis
     	double inf = Double.POSITIVE_INFINITY; // infinito
-    	double minValue = inf;      // menor valor atï¿½ agora
+    	double minValue = inf;      // menor valor até agora
     	double actValue = 0;        // valor atual
-    	for (int i = 0; i < n_estrela; i ++) {		// nï¿½mero de linhas
-    		for (int j = 0; j < n_estrela; j ++) {	// nï¿½mero de colunas
+    	for (int i = 0; i < n_estrela; i ++) {		// número de linhas
+    		for (int j = 0; j < n_estrela; j ++) {	// número de colunas
     			if (j < i) {
     				// a matriz deve ser triangular superior
     				actValue = inf;
     			} else {
-    				// calcula o custo da inserï¿½ï¿½o
+    				// calcula o custo da inserção
     				actValue = this.kappa_ij(Sch, i+n_estrela, j+n_estrela);
     			}
     			
     			if (actValue < minValue) {
-    				// se o atual ï¿½ menor do que o menor atï¿½ agora, atualiza
+    				// se o atual é menor do que o menor até agora, atualiza
     				minValue = actValue;
     			}
     		}
     	}
 
-        // unifica o resultado com a variï¿½vel passada
+        // unifica o resultado com a variável passada
     	return un.unifies(args[args.length-1], ASSyntax.createNumber(minValue));
     }
 }
