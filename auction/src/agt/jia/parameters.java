@@ -9,5 +9,7 @@ public class parameters{
 	
 	/** Control parameters **/
 	public static final double CONTROL_GAMMA = 0.5;
+	public static final double CONTROL_C0 = 0.33;
+	public static final double CONTROL_C1 = 0.33;
 	
 }

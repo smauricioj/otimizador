@@ -18,7 +18,7 @@ mas auction {
     	artifact queue: tools.Queue()
     }
 
-    // asl-path: auction/src/agt
+    asl-path: auction/src/agt, src/agt
 
 }
 

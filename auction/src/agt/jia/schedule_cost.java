@@ -38,35 +38,45 @@ public class schedule_cost extends DefaultInternalAction {
 		
 		double[] metrics = new double[3];
 		List<String> cliente_list = new ArrayList<String>();
-		List<Double> pick_up_list = new ArrayList<Double>();		
+		List<Double> pick_up_list = new ArrayList<Double>();
+		ListTerm final_event = ASSyntax.createList();
+		for (int i = 0; i < 3; i++) {
+			final_event.add(ASSyntax.createNumber(0));
+		}
+		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
+		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
 		
 		for (int index = 0; index < Sch.size(); index++) {
     		ListTerm event = (ListTerm)Sch.get(index);
+			StringTerm cliente = (StringTerm)event.get(0);
+			NumberTerm atendimento = (NumberTerm)event.get(1);
+			
 			if (index != 0) {
 	    		ListTerm last_event = (ListTerm)Sch.get(index-1);
+	    		NumberTerm last_atendimento = (NumberTerm)last_event.get(1);
 	    		
-	    		metrics[0] += this.travel_distance(event, last_event);
+	    		metrics[0] += atendimento.solve() - last_atendimento.solve() - parameters.SERVICE_TIME;
 			}
-			StringTerm cliente = (StringTerm)event.get(0);
-			if(!cliente_list.contains(cliente.toString())) {
-				NumberTerm atendimento = (NumberTerm)event.get(1);
+			
+			if (!cliente_list.contains(cliente.toString())) {
 				NumberTerm desejado = (NumberTerm)event.get(2);
 				pick_up_list.add(atendimento.solve());
 				cliente_list.add(cliente.toString());
 				
-				metrics[1] += atendimento.solve() - desejado.solve();
+				if (cliente.toString().equals("\""+this.client_name+"\"")) {
+					metrics[1] += (1 - parameters.CONTROL_GAMMA)*(atendimento.solve() - desejado.solve());
+				} else {
+					metrics[1] += parameters.CONTROL_GAMMA*(atendimento.solve() - desejado.solve());
+				}
 			} else {
 				int cliente_index = cliente_list.indexOf(cliente.toString());
-				NumberTerm atendimento = (NumberTerm)event.get(1);
-				double drop_off = atendimento.solve();
-				double pick_up = pick_up_list.get(cliente_index);
 				
-				metrics[2] += drop_off - pick_up;				
+				metrics[2] += atendimento.solve() - pick_up_list.get(cliente_index);				
 			}
 			
 		}
 		
-		
+		metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event);		
 		
 		return metrics;
 	}
@@ -74,8 +84,8 @@ public class schedule_cost extends DefaultInternalAction {
 	private double kappa_ij(ListTerm Sch, int i, int j) throws NoValueException {		
 		/** Calcula custo da inserção do pedido em i e j **/
 		
-    	Random rand = new Random(); //máquina de randoms
-    	double inf = Double.POSITIVE_INFINITY; // infinito
+    	double[] metrics_base = this.metrics(Sch);
+    	double final_kappa = 0;
     	
     	/** Os eventos no Sch são definidos por:
     	 *  	[cliente, atendimento, desejado, x, y]
@@ -125,9 +135,13 @@ public class schedule_cost extends DefaultInternalAction {
     		Sch_novo.set(index, event);
     	}
     	
-//    	System.out.println(Sch_novo);
+    	double[] metrics = this.metrics(Sch_novo);
+    	
+    	final_kappa += parameters.CONTROL_C0*(metrics[0]-metrics_base[0]);
+    	final_kappa += parameters.CONTROL_C1*(metrics[1]-metrics_base[1]);
+    	final_kappa += (1 - parameters.CONTROL_C0 - parameters.CONTROL_C1)*(metrics[2]-metrics_base[2]);
 		
-		return rand.nextInt(50)+1;
+		return final_kappa;
 	}
 
     @Override
@@ -189,6 +203,7 @@ public class schedule_cost extends DefaultInternalAction {
     			if (actValue < minValue) {
     				// se o atual é menor do que o menor até agora, atualiza
     				minValue = actValue;
+    				System.out.println(i+" "+j);
     			}
     		}
     	}
