@@ -35,23 +35,33 @@ public class schedule_cost extends DefaultInternalAction {
 	}
 	
 	private double[] metrics(ListTerm Sch) throws NoValueException {
+		/** Cálculo das métricas de avaliação do agendamento
+		 * 		Recebe:  ListTerm Sch -> agendamento a ser avaliado
+		 * 		Retorna: double[3]    -> métricas de avaliação
+		 * 
+		 *  O vetor contém as métricas de: distância percorrida;
+		 *  atraso de atendimento; e tempo de viagem.**/
 		
-		double[] metrics = new double[3];
-		List<String> cliente_list = new ArrayList<String>();
-		List<Double> pick_up_list = new ArrayList<Double>();
+		double[] metrics = new double[3]; // retorno final
+		List<String> cliente_list = new ArrayList<String>(); // lista com o nome dos clientes sendo atendidos
+		List<Double> pick_up_list = new ArrayList<Double>(); // lista com os tempos de atendimento
 		ListTerm final_event = ASSyntax.createList();
 		for (int i = 0; i < 3; i++) {
 			final_event.add(ASSyntax.createNumber(0));
 		}
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
+			// final_event é criado para garantir que o veículo volta pro depósito no fim da operação
+			// (ou que pelo menos isso é considerado na hora de calcular as métricas haha)
 		
 		for (int index = 0; index < Sch.size(); index++) {
-    		ListTerm event = (ListTerm)Sch.get(index);
-			StringTerm cliente = (StringTerm)event.get(0);
-			NumberTerm atendimento = (NumberTerm)event.get(1);
+    		ListTerm event = (ListTerm)Sch.get(index); // evento sendo atualmente avaliado
+			StringTerm cliente = (StringTerm)event.get(0); // nome do cliente
+			NumberTerm atendimento = (NumberTerm)event.get(1); // tempo de atendimento
 			
 			if (index != 0) {
+				/** Calculo do tempo de viagem
+				 * 	so realizado a partir do segundo evento, já que é retroativo **/
 	    		ListTerm last_event = (ListTerm)Sch.get(index-1);
 	    		NumberTerm last_atendimento = (NumberTerm)last_event.get(1);
 	    		
@@ -59,6 +69,9 @@ public class schedule_cost extends DefaultInternalAction {
 			}
 			
 			if (!cliente_list.contains(cliente.toString())) {
+				/** Calculo do atraso dos passageiros
+				 *  so realizado no primeiro atendimento ao cliente (pick_up)
+				 *  ponderado por parameters.CONTROL_GAMMA entre o atual e os passados **/
 				NumberTerm desejado = (NumberTerm)event.get(2);
 				pick_up_list.add(atendimento.solve());
 				cliente_list.add(cliente.toString());
@@ -69,9 +82,19 @@ public class schedule_cost extends DefaultInternalAction {
 					metrics[1] += parameters.CONTROL_GAMMA*(atendimento.solve() - desejado.solve());
 				}
 			} else {
+				/** Calculo do tempo de viagem dos passageiros
+				 *  so realizado no segundo atendimento ao cliente (drop_off) **/
 				int cliente_index = cliente_list.indexOf(cliente.toString());
+				cliente_list.remove(cliente_index);
 				
-				metrics[2] += atendimento.solve() - pick_up_list.get(cliente_index);				
+				metrics[2] += atendimento.solve() - pick_up_list.remove(cliente_index);				
+			}
+			
+			if (cliente_list.size() > parameters.VEHICLE_CAPACITY) {
+				/** Se, a qualquer momento, o numero de clientes passar 
+				 *  da capacidade do veículo, custo é infinito **/
+				metrics[0] = Double.POSITIVE_INFINITY;
+				break;
 			}
 			
 		}
@@ -122,7 +145,6 @@ public class schedule_cost extends DefaultInternalAction {
     	ListTerm Sch_novo = Sch.cloneLT();
     	Sch_novo.add(i+1, new_event_i);
     	Sch_novo.add(j+2, new_event_j);
-//    	System.out.println(" "+i+" "+j+" ");
     	for ( int index = i+1; index < Sch_novo.size(); index++ ) {
     		ListTerm event = (ListTerm)Sch_novo.get(index);
     		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
@@ -134,6 +156,10 @@ public class schedule_cost extends DefaultInternalAction {
     		
     		Sch_novo.set(index, event);
     	}
+    	
+    	/** As métricas de avaliação do agendamento são calculadas
+    	 *  usando método interno e depois somadas, ponderando com
+    	 *  os parâmetros de controle. Esse é o resultado final **/
     	
     	double[] metrics = this.metrics(Sch_novo);
     	
@@ -176,7 +202,7 @@ public class schedule_cost extends DefaultInternalAction {
     	for (Term t: Sch) {    // Todos os eventos da agenda
             ListTerm event = (ListTerm)t;    // Um evento específico
             NumberTerm et = (NumberTerm)event.get(1); // instante do evento
-            if ( et.solve() < Kt.solve() || et.solve() < Dt.solve()) {
+            if ( et.solve() < this.known_time || et.solve() < this.desired_time) {
             	/* se é passado OU anterior ao desejado,
             	   aumenta o index do primeiro evento    */
             	i_pe += 1;
@@ -189,10 +215,9 @@ public class schedule_cost extends DefaultInternalAction {
     		n_estrela = 1;
     		i_pe = 0;
     	}
-//    	System.out.println("n_estrela é "+n_estrela+" e  os outros são "+n_e+" "+i_pe);
-    	double inf = Double.POSITIVE_INFINITY; // infinito
-    	double minValue = inf;      // menor valor até agora
-    	double actValue = 0;        // valor atual
+    	
+    	double actValue = Double.POSITIVE_INFINITY;      // menor valor até agora
+    	double minValue = actValue;        // valor atual
     	for (int i = 0; i < n_estrela; i ++) {		// número de linhas
     		for (int j = 0; j < n_estrela; j ++) {	// número de colunas
     			if (j >= i){
