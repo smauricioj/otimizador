@@ -21,7 +21,7 @@ class Leilao:
 
 		jcm_text = ''' '''
 		jcm_text += 'mas auction { \n\n\t'
-		jcm_text += 'agent driver_: driver.asl {{ instances: {}}} \n\t'.format(static_data['number_of_vehicles'])
+		jcm_text += 'agent driver_: driver.asl {{ instances: {}\n}} \n\t'.format(static_data['number_of_vehicles'])
 		for i, req_data in enumerate(req):
 			req_data['queue_number'] = str(i+1)
 			req_data['counter'] = str(i+1).zfill(3)
@@ -36,7 +36,7 @@ class Leilao:
 		focus: tools.queue
 	}}\n\n\t'''.format(**req_data)
 			jcm_text += snippet
-		jcm_text += 'workspace tools {{ artifact queue: tools.Queue() }}\n\n\t'
+		jcm_text += 'workspace tools { artifact queue: tools.Queue() \n}\n\n\t'
 		jcm_text += 'asl-path: auction/src/agt\n\n'
 		jcm_text += '}'
 
@@ -44,7 +44,7 @@ class Leilao:
 			file.write(jcm_text)
 			file.close()
 		
-		# args = 'java '
-		# args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
-		# args += '{}/auction/auction.jcm'.format(self.actual_path)
-		# check_call(args.split(' '), shell = True)
+		args = 'java '
+		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
+		args += '{}/auction/auction.jcm'.format(self.actual_path)
+		check_call(args.split(' '), shell = True)

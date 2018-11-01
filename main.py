@@ -5,7 +5,6 @@ Created on Thu Apr 19 13:14:13 2018
 @author: Sergio P.
 """
 
-from models.otimizador import Otimizador
 from models.leilao import Leilao
 from models.gerador import Gerador
 from models.resultado import Resultado
@@ -83,8 +82,8 @@ if __name__ == "__main__":
 
             valid_response = False
             while not valid_response:
-                r = upper(raw_input('Confirma? (Y/N) > '))
-                if r in ('Y','N'):
+                r = raw_input('Confirma? (Y/N) > ')
+                if r.upper() in ('Y','N'):
                     valid_response = True
                 else:
                     print u'Resposta inválida'
@@ -102,6 +101,7 @@ if __name__ == "__main__":
         print "#"*70
         print "#"
         print u"# Iniciando processo de otimizar instâncias."
+        from models.otimizador import Otimizador
         stop = False
         while not stop:
             r = raw_input('Qual instancia(s) otimizar? > ')
