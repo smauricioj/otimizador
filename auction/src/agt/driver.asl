@@ -19,32 +19,35 @@ schedule_test([["c0",0,0,5,5],
 
 +auction(St, X, Y, KT, DT)[source(A)] : true
 	<-  ?schedule(Sch);
-		?schedule_test(Sch_t)
-		jia.schedule_cost(Sch_t, "drop", 1, 1, 1, 1, Result);
-		.print(Result)
-		.send(A,tell,bid(Result));
+		jia.schedule_cost(Sch, St, X, Y, Kt, Dt, Result);
+		.nth(0,Result,Bid_value);		
+		.nth(1,Result,Insertion_i);
+		.nth(2,Result,Insertion_j);
+		.send(A,tell,bid(Bid_value));
 		?auctions_in_place(L);
-		.concat(L,[A],NL);
+		.concat(L,[[A, Insertion_i, Insertion_j]],NL);
 		.abolish(auctions_in_place(_));
 		+auctions_in_place(NL)
 		.
 		
-+winner(W)[source(A)] : auctions_in_place(L) & .member(A,L) &
++winner(W)[source(A)] : auctions_in_place(L) & .member([A,I_i,I_j],L) &
 						.my_name(N) & N = W
 	<-  ?auction(St, X, Y, KT, DT)[source(A)];
 		?schedule(Sch);
 		
-		// TODO: insercao de novos pedid		//	 jia.schedule_update(Sch, St, X, Y, DT, NewSch)
+		// TODO: insercao de novos pedid		
+		jia.schedule_update(Sch, I_i, I_j, St, X, Y, Dt, A, NewSch)
+		.print(NewSch);
 		
 		!!remove_auction_in_place(A)
 		.
 
 +winner(W)[source(A)] : auctions_in_place(L) & .member(A,L)
 	<-	!!remove_auction_in_place(A).
-
+		
 +!remove_auction_in_place(A) : true
 	<-	?auctions_in_place(L);
-		.delete(A,L,NL);
+		.delete([A,_,_],L,NL);
 		.abolish(auctions_in_place(_));
 		+auctions_in_place(NL)
 		.

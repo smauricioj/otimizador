@@ -5,7 +5,6 @@ package jia;
 import jason.*;
 import jason.asSemantics.*;
 import jason.asSyntax.*;
-import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -30,7 +29,7 @@ public class schedule_cost extends DefaultInternalAction {
 		double x1 = x1Term.solve();
 		double y1 = y1Term.solve();
 		
-		return Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) );
+		return Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) * 100.0) / 100.0;
 		
 	}
 	
@@ -124,6 +123,7 @@ public class schedule_cost extends DefaultInternalAction {
 								                   ASSyntax.createNumber(this.desired_time));
     	
     	if ( this.service_type.equals("\"drop\"") ) {
+    		System.out.println("oi");
     		new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
     		new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
     		
@@ -143,8 +143,8 @@ public class schedule_cost extends DefaultInternalAction {
     	 *  acordo com as distancias **/
     	
     	ListTerm Sch_novo = Sch.cloneLT();
+    	Sch_novo.add(j+1, new_event_j);
     	Sch_novo.add(i+1, new_event_i);
-    	Sch_novo.add(j+2, new_event_j);
     	for ( int index = i+1; index < Sch_novo.size(); index++ ) {
     		ListTerm event = (ListTerm)Sch_novo.get(index);
     		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
@@ -152,7 +152,7 @@ public class schedule_cost extends DefaultInternalAction {
     		NumberTerm t0Term = (NumberTerm)last_event.get(1);
     		double tempo_viagem = this.travel_distance(event, last_event);
     		double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
-			event.set(1, ASSyntax.createNumber(instante_atendimento));
+    		event.set(1, ASSyntax.createNumber(Math.max(this.desired_time, instante_atendimento)));
     		
     		Sch_novo.set(index, event);
     	}
@@ -218,6 +218,8 @@ public class schedule_cost extends DefaultInternalAction {
     	
     	double actValue = Double.POSITIVE_INFINITY;      // menor valor até agora
     	double minValue = actValue;        // valor atual
+    	int min_i = Integer.MAX_VALUE;
+    	int min_j = Integer.MAX_VALUE;
     	for (int i = 0; i < n_estrela; i ++) {		// número de linhas
     		for (int j = 0; j < n_estrela; j ++) {	// número de colunas
     			if (j >= i){
@@ -228,13 +230,20 @@ public class schedule_cost extends DefaultInternalAction {
     			if (actValue < minValue) {
     				// se o atual é menor do que o menor até agora, atualiza
     				minValue = actValue;
+    				min_i = i+i_pe;
+    				min_j = j+i_pe;
     				System.out.println(i+" "+j);
     			}
     		}
     	}
-
+    	
+    	ListTerm result = ASSyntax.createList();
+    	result.add(ASSyntax.createNumber(Math.round(minValue)));
+    	result.add(ASSyntax.createNumber(min_i));
+    	result.add(ASSyntax.createNumber(min_j));
+    	
         // unifica o resultado com a variável passada
-    	return un.unifies(args[args.length-1], ASSyntax.createNumber(minValue));
+    	return un.unifies(args[args.length-1], result);
     }
 }
 
