@@ -29,7 +29,7 @@ public class schedule_update extends DefaultInternalAction {
         // execute the internal action
     	//	 jia.schedule_update(Sch, I_i, I_j, St, X, Y, DT, A, NewSch)
     	
-        ts.getAg().getLogger().info("executing internal action 'jia.schedule_cost'");
+        ts.getAg().getLogger().info("executing internal action 'jia.schedule_update'");
         if (!args[args.length-1].isVar()) {
         	throw new JasonException("Last argument of schedule_cost is not a variable");
         }

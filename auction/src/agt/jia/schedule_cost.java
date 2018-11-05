@@ -103,7 +103,7 @@ public class schedule_cost extends DefaultInternalAction {
 		return metrics;
 	}
 	
-	private double kappa_ij(ListTerm Sch, int i, int j) throws NoValueException {		
+	private double kappa_ij(ListTerm Sch, int i, int j, TransitionSystem ts) throws NoValueException {		
 		/** Calcula custo da inserção do pedido em i e j **/
 		
     	double[] metrics_base = this.metrics(Sch);
@@ -123,7 +123,6 @@ public class schedule_cost extends DefaultInternalAction {
 								                   ASSyntax.createNumber(this.desired_time));
     	
     	if ( this.service_type.equals("\"drop\"") ) {
-    		System.out.println("oi");
     		new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
     		new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
     		
@@ -162,6 +161,9 @@ public class schedule_cost extends DefaultInternalAction {
     	 *  os parâmetros de controle. Esse é o resultado final **/
     	
     	double[] metrics = this.metrics(Sch_novo);
+    	
+    	ts.getAg().getLogger().info("METRICAS_B "+metrics[0]+" "+metrics[1]+" "+metrics[2]);
+    	ts.getAg().getLogger().info("METRICAS_A "+metrics_base[0]+" "+metrics_base[1]+" "+metrics_base[2]);
     	
     	final_kappa += parameters.CONTROL_C0*(metrics[0]-metrics_base[0]);
     	final_kappa += parameters.CONTROL_C1*(metrics[1]-metrics_base[1]);
@@ -211,9 +213,9 @@ public class schedule_cost extends DefaultInternalAction {
         }
     	
     	int n_estrela = n_e - i_pe; // número de espaços disponíveis
-    	if ( n_e == 1 ) { // caso primeira inserção do motorista (é feio, eu sei)
+    	if ( n_estrela == 0 ) { // caso só tenha como inserir no fim (é feio, eu sei)
     		n_estrela = 1;
-    		i_pe = 0;
+    		i_pe = n_e -1;
     	}
     	
     	double actValue = Double.POSITIVE_INFINITY;      // menor valor até agora
@@ -224,7 +226,7 @@ public class schedule_cost extends DefaultInternalAction {
     		for (int j = 0; j < n_estrela; j ++) {	// número de colunas
     			if (j >= i){
     				// calcula o custo da inserção na triangular superior
-    				actValue = this.kappa_ij(Sch, i+i_pe, j+i_pe);
+    				actValue = this.kappa_ij(Sch, i+i_pe, j+i_pe, ts);
     			}
     			
     			if (actValue < minValue) {
@@ -232,7 +234,7 @@ public class schedule_cost extends DefaultInternalAction {
     				minValue = actValue;
     				min_i = i+i_pe;
     				min_j = j+i_pe;
-    				System.out.println(i+" "+j);
+    				// System.out.println(i+" "+j);
     			}
     		}
     	}

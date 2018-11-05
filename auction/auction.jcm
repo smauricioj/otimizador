@@ -1,81 +1,76 @@
- mas auction { 
+mas auction { 
 
-	agent driver_: driver.asl { instances: 1
-		
-	} 
-	
-	agent client_000: client.asl {
-		beliefs: service_type(drop),
-			     desired_time(29),
-			     known_time(26.76),
-			     service_point_x(-1.0),
-			     service_point_y(1.9),
-			     queue_number(0)
-		focus: tools.queue
-	}
-
+	agent driver_: driver.asl { instances: 2
+} 
 	
 	agent client_001: client.asl {
-		beliefs: service_type(pick),
-			     desired_time(37),
-			     known_time(33.51),
-			     service_point_x(8.4),
-			     service_point_y(4.7),
+		beliefs: service_type("pick"),
+			     desired_time(36),
+			     known_time(34.7),
+			     service_point_x(2.2),
+			     service_point_y(3.6),
 			     queue_number(1)
 		focus: tools.queue
 	}
 
 	
 	agent client_002: client.asl {
-		beliefs: service_type(drop),
-			     desired_time(60),
-			     known_time(57.2),
-			     service_point_x(-2.5),
-			     service_point_y(4.5),
+		beliefs: service_type("drop"),
+			     desired_time(43),
+			     known_time(40.38),
+			     service_point_x(-1.7),
+			     service_point_y(-1.1),
 			     queue_number(2)
 		focus: tools.queue
 	}
 
 	
 	agent client_003: client.asl {
-		beliefs: service_type(pick),
-			     desired_time(80),
-			     known_time(77.71),
-			     service_point_x(3.3),
-			     service_point_y(-2.2),
+		beliefs: service_type("drop"),
+			     desired_time(65),
+			     known_time(63.14),
+			     service_point_x(-0.5),
+			     service_point_y(4.9),
 			     queue_number(3)
 		focus: tools.queue
 	}
 
 	
 	agent client_004: client.asl {
-		beliefs: service_type(drop),
-			     desired_time(100),
-			     known_time(97.65),
-			     service_point_x(-0.3),
-			     service_point_y(0.8),
+		beliefs: service_type("pick"),
+			     desired_time(70),
+			     known_time(68.3),
+			     service_point_x(3.1),
+			     service_point_y(-2.6),
 			     queue_number(4)
 		focus: tools.queue
 	}
 
 	
 	agent client_005: client.asl {
-		beliefs: service_type(pick),
-			     desired_time(119),
-			     known_time(116.78),
-			     service_point_x(-3.3),
-			     service_point_y(7.8),
+		beliefs: service_type("drop"),
+			     desired_time(95),
+			     known_time(91.46),
+			     service_point_x(-1.6),
+			     service_point_y(3.3),
 			     queue_number(5)
 		focus: tools.queue
 	}
 
-	workspace tools {
-		artifact queue: tools.Queue()
+	
+	agent client_006: client.asl {
+		beliefs: service_type("pick"),
+			     desired_time(103),
+			     known_time(101.85),
+			     service_point_x(-4.2),
+			     service_point_y(-4.6),
+			     queue_number(6)
+		focus: tools.queue
 	}
 
-	asl-path: auction/src/agt
-
+	workspace tools { artifact queue: tools.Queue() 
 }
 
+	asl-path: auction/src/agt,src/agt
 
-
+}

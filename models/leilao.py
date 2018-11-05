@@ -19,7 +19,7 @@ class Leilao:
 		req = self.ins.get_req()
 		static_data = self.ins.get_static_data()
 
-		jcm_text = ''' '''
+		jcm_text = ''''''
 		jcm_text += 'mas auction { \n\n\t'
 		jcm_text += 'agent driver_: driver.asl {{ instances: {}\n}} \n\t'.format(static_data['number_of_vehicles'])
 		for i, req_data in enumerate(req):
@@ -27,7 +27,7 @@ class Leilao:
 			req_data['counter'] = str(i+1).zfill(3)
 			snippet = '''
 	agent client_{counter}: client.asl {{
-		beliefs: service_type({service_type}),
+		beliefs: service_type("{service_type}"),
 			     desired_time({desired_time}),
 			     known_time({known_time}),
 			     service_point_x({service_point_x}),
@@ -37,10 +37,10 @@ class Leilao:
 	}}\n\n\t'''.format(**req_data)
 			jcm_text += snippet
 		jcm_text += 'workspace tools { artifact queue: tools.Queue() \n}\n\n\t'
-		jcm_text += 'asl-path: auction/src/agt\n\n'
+		jcm_text += 'asl-path: auction/src/agt,src/agt\n\n'
 		jcm_text += '}'
 
-		with open(path.join(self.actual_path,'jcm_text.jcm'), 'w') as file:
+		with open(path.join(self.actual_path,'auction/auction.jcm'), 'w') as file:
 			file.write(jcm_text)
 			file.close()
 		
