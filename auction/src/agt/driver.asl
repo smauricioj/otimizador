@@ -5,7 +5,7 @@
  *     onde : c = cliente
  *            t = instante real de atendimento
  *            d = instante desejado de atendimento
- * 			  x, y = posicao cartesiana de atendiment * */
+ * 			  x, y = posicao cartesiana de atendimento */
 
 schedule([["c0",0,0,5,5]]).
 
@@ -31,6 +31,10 @@ schedule([["c0",0,0,5,5]]).
 		jia.schedule_update(Sch, I_i, I_j, St, X, Y, DT, A, NewSch);
 		.print(NewSch);
 		-+schedule(NewSch).
+		
++end : true
+	<-	?schedule(Sch);
+		jia.send_data(Sch).
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

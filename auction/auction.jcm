@@ -1,6 +1,6 @@
 mas auction { 
 
-	agent driver_: driver.asl { instances: 2
+	agent driver_: driver.asl { instances: 1
 } 
 	
 	agent client_001: client.asl {
@@ -12,62 +12,12 @@ mas auction {
 			     queue_number(1)
 		focus: tools.queue
 	}
-
 	
-	agent client_002: client.asl {
-		beliefs: service_type("drop"),
-			     desired_time(43),
-			     known_time(40.38),
-			     service_point_x(-1.7),
-			     service_point_y(-1.1),
-			     queue_number(2)
+	agent end_001: end_time.asl{
+		beliefs: queue_number(2)
 		focus: tools.queue
 	}
-
 	
-	agent client_003: client.asl {
-		beliefs: service_type("drop"),
-			     desired_time(65),
-			     known_time(63.14),
-			     service_point_x(-0.5),
-			     service_point_y(4.9),
-			     queue_number(3)
-		focus: tools.queue
-	}
-
-	
-	agent client_004: client.asl {
-		beliefs: service_type("pick"),
-			     desired_time(70),
-			     known_time(68.3),
-			     service_point_x(3.1),
-			     service_point_y(-2.6),
-			     queue_number(4)
-		focus: tools.queue
-	}
-
-	
-	agent client_005: client.asl {
-		beliefs: service_type("drop"),
-			     desired_time(95),
-			     known_time(91.46),
-			     service_point_x(-1.6),
-			     service_point_y(3.3),
-			     queue_number(5)
-		focus: tools.queue
-	}
-
-	
-	agent client_006: client.asl {
-		beliefs: service_type("pick"),
-			     desired_time(103),
-			     known_time(101.85),
-			     service_point_x(-4.2),
-			     service_point_y(-4.6),
-			     queue_number(6)
-		focus: tools.queue
-	}
-
 	workspace tools { artifact queue: tools.Queue() 
 }
 
