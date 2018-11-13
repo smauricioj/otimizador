@@ -31,11 +31,6 @@ if __name__ == "__main__":
     tabelar = '-t' in opt_list
 
     if gerar:
-
-        # ger = Gerador(40, local_path = '\\teste')
-        # ger.set_data(2, 4, 1)
-        # ger.save_ins()
-        # exit()
                 
         # ################################################### #
         #                                                     #
@@ -133,8 +128,13 @@ if __name__ == "__main__":
         print "#"*70
         print "#"
         print u"# Iniciando processo de leiloar instâncias."
-        r = raw_input('Qual instancia(s) realizar leilao? > ')
-        Leilao(r).begin()
+        stop = False
+        while not stop:
+            r = raw_input('Qual instancia(s) realizar leilao? > ')
+            if r == 'S':
+                stop = True
+            else:
+                Leilao(r).begin()
 
 
     if resultar:

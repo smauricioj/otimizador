@@ -6,9 +6,9 @@
 
 /* Plans */
 
-+next(N) : queue_number(N)
++next(N) : queue_number(N) & end_time(E)
 	<-	.broadcast(tell, end);
-		.wait(5000);
+		.wait(E);
 		.stopMAS.
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

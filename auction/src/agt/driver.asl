@@ -32,9 +32,9 @@ schedule([["c0",0,0,5,5]]).
 		.print(NewSch);
 		-+schedule(NewSch).
 		
-+end : true
++end : .my_name(N)
 	<-	?schedule(Sch);
-		jia.send_data(Sch).
+		jia.send_data(N,Sch).
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
