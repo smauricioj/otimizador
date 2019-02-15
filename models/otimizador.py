@@ -18,7 +18,7 @@ class Otimizador:
 	def begin(self):
 		M = GRB.INFINITY
 		n, m, Q   = self.ins.n, self.ins.m, self.ins.Q
-		q, s, t   = self.ins.get_q(), self.ins.get_s(), self.ins.get_t()
+		q, s, T   = self.ins.get_q(), self.ins.get_s(), self.ins.get_t()
 		W, R, tau = self.ins.get_W(), self.ins.get_R(), self.ins.get_tau()
 		arcos = tau.keys()
 		origens, destinos, locais = self.ins.get_O(), self.ins.get_D(), self.ins.get_V()
@@ -33,17 +33,17 @@ class Otimizador:
 		carga     = {(i,k):0   for i in locais for k in veiculos}
 		             
 		x = mod.addVars(viagens,           vtype=GRB.BINARY,     name="x")
-		T = mod.addVars(instantes, lb=0.0, vtype=GRB.CONTINUOUS, name="T")
+		t = mod.addVars(instantes, lb=0.0, vtype=GRB.CONTINUOUS, name="T")
 		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
 		exp += 0.25*quicksum(x[ijk] * tau[ij]
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
-		exp += 0.5*quicksum((T[ik] - t[i]) * (T[ik] - t[i])
+		exp += 0.5*quicksum((t[ik] - T[i])
 		                    for ik in instantes for i in origens
 		                    if ik[0] == i)
-		exp += 0.25*quicksum((T[(i,k)] - T[(i+n,k)]) * (T[(i,k)] - T[(i+n,k)])
+		exp += 0.25*quicksum((t[(i+n,k)] - t[(i,k)])
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)
@@ -89,8 +89,8 @@ class Otimizador:
 					dk = (i+n,k)
 
 					mod.addConstr( n_visitas == n_visitas_destino )
-					mod.addConstr( T[ik] >= t[i])
-					mod.addConstr( T[dk] >= T[ik] )
+					mod.addConstr( t[ik] >= T[i])
+					mod.addConstr( t[dk] >= t[ik] )
  
 
 		for ij in arcos:
@@ -100,7 +100,7 @@ class Otimizador:
 		        ik, jk = (i,k), (j,k)
 		        ijk = (i,j,k)
 
-		        mod.addConstr( T[ik] + s[i] + tau[ij] - T[jk] <= (1 - x[ijk])*1000 )
+		        mod.addConstr( t[ik] + s[i] + tau[ij] - t[jk] <= (1 - x[ijk])*1000 )
 		        
 		        mod.addConstr( u[ik] + q[i] - u[jk] <= (1 - x[ijk])*Q )
 		        
