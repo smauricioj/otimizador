@@ -20,6 +20,7 @@ class Otimizador:
 		n, m, Q   = self.ins.n, self.ins.m, self.ins.Q
 		q, s, T   = self.ins.get_q(), self.ins.get_s(), self.ins.get_t()
 		W, R, tau = self.ins.get_W(), self.ins.get_R(), self.ins.get_tau()
+		T_max = self.ins.T
 		arcos = tau.keys()
 		origens, destinos, locais = self.ins.get_O(), self.ins.get_D(), self.ins.get_V()
 		veiculos = self.ins.get_K()
@@ -37,13 +38,13 @@ class Otimizador:
 		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
-		exp += 0.25*quicksum(x[ijk] * tau[ij]
+		exp += 0.33*quicksum( (x[ijk] * tau[ij])
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
-		exp += 0.5*quicksum((t[ik] - T[i])
+		exp += 0.33*quicksum( (t[ik] - T[i])
 		                    for ik in instantes for i in origens
 		                    if ik[0] == i)
-		exp += 0.25*quicksum((t[(i+n,k)] - t[(i,k)])
+		exp += 0.33*quicksum( (t[(i+n,k)] - t[(i,k)])
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)
@@ -95,14 +96,28 @@ class Otimizador:
 
 		for ij in arcos:
 		    i, j = ij[0], ij[1]
+		    qj = q.copy()
+		    del qj[i]
 
 		    for k in veiculos:
 		        ik, jk = (i,k), (j,k)
 		        ijk = (i,j,k)
 
-		        mod.addConstr( t[ik] + s[i] + tau[ij] - t[jk] <= (1 - x[ijk])*1000 )
+		        # n_demanda_destino = quicksum(qj[x]*x[ijk] for ijk in viagens for x in locais
+		        # 							 if ijk[0] != j)
+
+		        mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
 		        
-		        mod.addConstr( u[ik] + q[i] - u[jk] <= (1 - x[ijk])*Q )
+		        mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
+
+		        # try:
+		        # 	mod.addConstr( u[ik] <= Q - ( x[(0,i,k)]*(Q - max(qj.iterkeys(), key=(lambda key: q[key])) - q[i]) ) - n_demanda_destino )
+		        # except KeyError as e:
+		        # 	mod.addConstr( u[ik] <= Q - n_demanda_destino )
+
+		        # mod.addConstr( q[i] <= u[ik] )
+		        # mod.addConstr( Q >= u[ik] )
+
 		        
 		for k in veiculos:   
 		    mod.addConstr( u[(2*n+1,k)] == 0 ) # Não há restrições para 'saidas' de
@@ -117,7 +132,7 @@ class Otimizador:
 		if mod.objVal <= 100000:
 			for v in mod.getVars():
 				self.res.add_trip('{}={}'.format(v.varName, v.x))
-			self.res.fig_requests()
+			# self.res.fig_requests()
 			self.res.fig_routes()
 			self.res.result_data_DB(mod.runtime, mod.objVal)
 		else:

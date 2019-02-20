@@ -17,6 +17,12 @@ from os import listdir, path
 
 if __name__ == "__main__":
 
+
+    actual_path = path.dirname(path.abspath("__file__"))
+    instancia_path = path.join(actual_path,'models\\instancias')
+    resultados_path = path.join(actual_path,'resultados')    
+    scripts_path = path.join(actual_path,'models\\db_scripts')
+
     try:
         singles = 'olgrt'
         opts, args = getopt(argv[1:],singles)
@@ -101,20 +107,21 @@ if __name__ == "__main__":
         while not stop:
             r = raw_input('Qual instancia(s) otimizar? > ')
             if r.split('/')[0] == 'all':
-                actual_path = path.dirname(path.abspath("__file__"))
-                instancia_path = path.join(actual_path,'models\\instancias')
-                resultados_path = path.join(actual_path,'resultados')
-                list_resultados = listdir(resultados_path)
+                # actual_path = path.dirname(path.abspath("__file__"))
+                # instancia_path = path.join(actual_path,'models\\instancias')
+                # resultados_path = path.join(actual_path,'resultados')
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
                     n_req, n_veh, n_ins = [int(x) for x in ins_id.split('_')]
+                    if n_req == 0:
+                        continue
                     try:
                         post_case = r.split('/')[1]
                     except IndexError:
                         post_case = ''
                     if post_case == 'new':
-                        if ins_id not in list_resultados:
+                        if ins_id not in listdir(resultados_path):
                             Otimizador(ins_id).begin()
                     else:
                         Otimizador(ins_id).begin()
@@ -141,9 +148,9 @@ if __name__ == "__main__":
         Resultado(Instancia('00_00_000.json')).plot_global_result_data()
 
     if tabelar:                
-        actual_path = path.dirname(path.abspath("__file__"))
-        scripts_path = path.join(actual_path,'models\\db_scripts')
-        instancia_path = path.join(actual_path,'models\\instancias')
+        # actual_path = path.dirname(path.abspath("__file__"))
+        # scripts_path = path.join(actual_path,'models\\db_scripts')
+        # instancia_path = path.join(actual_path,'models\\instancias')
 
         db_man = Db_manager('persistent_data.db', scripts_path)
 
@@ -152,10 +159,10 @@ if __name__ == "__main__":
         #         print v
         # exit()
 
-        # db_man.execute('DELETE FROM global_results WHERE n_req = 5')
+        # db_man.execute('DELETE FROM global_results')
 
-        # for row in db_man.execute("SELECT * FROM specific_results WHERE n_req == 12 and n_veh == 5 and n_ins = 14"):
-        #     print row
+        for row in db_man.execute("SELECT * FROM specific_results"):
+            print row
 
         # for filename in listdir(instancia_path):
         #     print filename
