@@ -7,7 +7,7 @@
  *            d = instante desejado de atendimento
  * 			  x, y = posicao cartesiana de atendimento */
 
-schedule([["c0",0,0,5,5]]).
+schedule([["client_000",0,0,5,5]]).
 
 /* Initial goals */
 
@@ -30,11 +30,13 @@ schedule([["c0",0,0,5,5]]).
 		?bid_done(A,I_i,I_j);	
 		jia.schedule_update(Sch, I_i, I_j, St, X, Y, DT, A, NewSch);
 		.print(NewSch);
-		-+schedule(NewSch).
+		-+schedule(NewSch);
+		.
 		
 +end : .my_name(N)
 	<-	?schedule(Sch);
-		jia.send_data(N,Sch).
+		jia.send_data(N,Sch);
+		.
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

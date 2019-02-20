@@ -51,9 +51,7 @@ class DataList(list):
 		fig, ax = plt.subplots()
 
 		xrange_update = False
-		print self.what
 		for i, data in enumerate(self):
-			print i, data
 			if len(data) == 0:
 				value_mean = None
 				value_std = None
@@ -73,7 +71,6 @@ class DataList(list):
 		boxprops = dict(linewidth = 1.5, color = 'k')
 		medianprops = dict(linewidth = 1.5, color = 'k')
 		whiskerprops = dict(linewidth = 1, color = 'k', linestyle = '-')
-		print self.xrange
 		if self.xrange != [-1000, 1000]:
 			ax.boxplot( self[self.xrange[0]:self.xrange[1]+1],
 						notch = False,
@@ -205,7 +202,6 @@ class Resultado:
 		element_handle = []
 		for id_veh, route in enumerate(self.rotas):
 			G.add_edges_from(route)
-			print styles[id_veh]
 			draw_networkx_edges(G, pos, edgelist = route, edge_color = colors[id_veh], edge_style = styles[id_veh] )
 			props = dict(linewidth = 1.5, color = colors[id_veh],
 				         label = u'Veículo {}'.format(id_veh), linestyle = styles[id_veh])
@@ -273,88 +269,115 @@ class Resultado:
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 
-		# for n_veh_plot in range(1,6):
-		# 	folder = 'Instancias de frota {}'.format(str(n_veh_plot).zfill(2))
-		# 	w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot),
-		# 		                   u"Número de pedidos", 25, folder = folder)
-		# 	t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot),
-		# 		                   u"Número de pedidos", 25, folder = folder)		
-		# 	o_time_data = DataList(u"Tempo de processamento {} veh".format(n_veh_plot),
-		# 		                   u"Número de pedidos", 25, ' (s)', '', True, True,
-		# 		                   folder = folder)
-		# 	r_time_data = DataList(u"Razao tempo de viagem real e ideal {} veh".format(n_veh_plot),
-		# 						   u"Número de pedidos", 25, folder = folder)
+		wheres = {}
+		wheres['otimizado'] = 1
+		wheres['leilao'] = 0
 
-		# 	travel_ratio_dict = {}
-		# 	for row in c.execute("SELECT * FROM specific_results"):
-		# 		n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-		# 		if n_veh == n_veh_plot and n_req != 0:
-		# 			travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id)
-		# 			travel_ratio_dict[travel_ratio_dict_key] = []
-		# 			travel_ratio_dict[travel_ratio_dict_key].append(e_time - i_time)
-		# 			w_time_data[n_req].append(i_time - d_time)
-		# 			t_time_data[n_req].append(e_time - i_time)
+		for base_folder, where_opt in wheres.iteritems():
+			for n_veh_plot in range(1,6):
+				folder = 'Instancias de frota {}'.format(str(n_veh_plot).zfill(2))
+				w_time_data = DataList(u"Tempo de espera {} veh".format(n_veh_plot),
+					                   u"Número de pedidos", 25, folder = base_folder+'\\'+folder)
+				t_time_data = DataList(u"Tempo de viagem {} veh".format(n_veh_plot),
+					                   u"Número de pedidos", 25, folder = base_folder+'\\'+folder)		
+				o_time_data = DataList(u"Tempo de processamento {} veh".format(n_veh_plot),
+					                   u"Número de pedidos", 25, ' (s)', '', True, True,
+					                   folder = base_folder+'\\'+folder)
+				# r_time_data = DataList(u"Razao tempo de viagem real e ideal {} veh".format(n_veh_plot),
+				# 					   u"Número de pedidos", 25, folder = folder)
 
-		# 	for row in c.execute('''SELECT * FROM requests'''):
-		# 		n_req, n_veh, n_ins, req_id, x, y = row[0], row[1], row[2], row[3], row[7], row[8]
-		# 		if n_veh == n_veh_plot and n_req != 0:
-		# 			distance = sqrt(x**2 + y**2)
-		# 			travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id+1)
-		# 			try:
-		# 				travel_ratio_dict[travel_ratio_dict_key].append(distance)
-		# 			except KeyError:
-		# 				pass
+				travel_ratio_dict = {}
+				for row in c.execute("SELECT * FROM specific_results WHERE opt = {}".format(where_opt)):
+					n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+					if n_veh == n_veh_plot and n_req != 0:
+						# travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id)
+						# travel_ratio_dict[travel_ratio_dict_key] = []
+						# travel_ratio_dict[travel_ratio_dict_key].append(e_time - i_time)
+						w_time_data[n_req].append(i_time - d_time)
+						t_time_data[n_req].append(e_time - i_time)
 
-		# 	# for k, v in travel_ratio_dict.iteritems():
-		# 	# 	print k, v
-		# 	# 	# try:
-		# 	# 	if v[0] >= v[1] and v[1] != 0:
-		# 	# 		r_time_data[int(k.split('_')[0])].append(v[0]/v[1])
-		# 	# 	# except ValueError:
-		# 	# 		# pass
+				# for row in c.execute('''SELECT * FROM requests'''):
+				# 	n_req, n_veh, n_ins, req_id, x, y = row[0], row[1], row[2], row[3], row[7], row[8]
+				# 	if n_veh == n_veh_plot and n_req != 0:
+				# 		distance = sqrt(x**2 + y**2)
+				# 		travel_ratio_dict_key = '{}_{}_{}_{}'.format(n_req,n_veh,n_ins,req_id+1)
+				# 		try:
+				# 			travel_ratio_dict[travel_ratio_dict_key].append(distance)
+				# 		except KeyError:
+				# 			pass
 
-		# 	for row in c.execute("SELECT * FROM global_results"):
-		# 		n_req, n_veh, runtime = row[0], row[1], row[8]
-		# 		if n_veh == n_veh_plot and n_req != 0:
-		# 			o_time_data[n_req].append(runtime)
+				# for k, v in travel_ratio_dict.iteritems():
+				# 	print k, v
+				# 	# try:
+				# 	if v[0] >= v[1] and v[1] != 0:
+				# 		r_time_data[int(k.split('_')[0])].append(v[0]/v[1])
+				# 	# except ValueError:
+				# 		# pass
 
-		# 	w_time_data.plot(self.save_image_data)
-		# 	t_time_data.plot(self.save_image_data)
-		# 	o_time_data.plot(self.save_image_data)
-		# 	# r_time_data.plot(self.save_image_data)
+				for row in c.execute("SELECT * FROM global_results WHERE opt = {}".format(where_opt)):
+					n_req, n_veh, runtime = row[0], row[1], row[8]
+					if n_veh == n_veh_plot and n_req != 0:
+						o_time_data[n_req].append(runtime)
 
-		for n_req_plot in range(2,15):
-			folder = 'Instancias de req {}'.format(str(n_req_plot).zfill(2))
-			w_time_data = DataList(u"Tempo de espera {} req".format(n_req_plot),
-				                   u"Frota veicular", 25, folder = folder)
-			t_time_data = DataList(u"Tempo de viagem {} req".format(n_req_plot),
-				                   u"Frota veicular", 25, folder = folder)
+				w_time_data.plot(self.save_image_data)
+				t_time_data.plot(self.save_image_data)
+				o_time_data.plot(self.save_image_data)
+				# r_time_data.plot(self.save_image_data)
 
-			for row in c.execute("SELECT * FROM specific_results"):
-				n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
-				if n_req == n_req_plot:
-					w_time_data[n_veh].append(i_time - d_time)
-					t_time_data[n_veh].append(e_time - i_time)
+		# 	for n_req_plot in range(2,15):
+		# 		folder = 'Instancias de req {}'.format(str(n_req_plot).zfill(2))
+		# 		w_time_data = DataList(u"Tempo de espera {} req".format(n_req_plot),
+		# 			                   u"Frota veicular", 25, folder = base_folder+'\\'+folder)
+		# 		t_time_data = DataList(u"Tempo de viagem {} req".format(n_req_plot),
+		# 			                   u"Frota veicular", 25, folder = base_folder+'\\'+folder)
 
-			w_time_data.plot(self.save_image_data)
-			t_time_data.plot(self.save_image_data)
+		# 		for row in c.execute("SELECT * FROM specific_results WHERE opt = {}".format(where_opt)):
+		# 			n_req, n_veh, n_ins, req_id, opt, d_time, i_time, e_time = row
+		# 			if n_req == n_req_plot:
+		# 				w_time_data[n_veh].append(i_time - d_time)
+		# 				t_time_data[n_veh].append(e_time - i_time)
+
+		# 		w_time_data.plot(self.save_image_data)
+		# 		t_time_data.plot(self.save_image_data)
 
 
-		d_requ_data = DataList(u"Distancia do terminal",
-							   u"Número de pedidos", 25)
-		t_requ_data = DataList(u"Instante desejado de atendimento",
-			                   u"Número de pedidos", 25)
+		# d_requ_data = DataList(u"Distancia do terminal",
+		# 					   u"Número de pedidos", 25)
+		# t_requ_data = DataList(u"Instante desejado de atendimento",
+		# 	                   u"Número de pedidos", 25)
 
-		for row in c.execute("SELECT * FROM requests"):
-			n_req, desired_time, x, y = row[0], row[5], row[7], row[8]
-			distance = sqrt(x**2 + y**2)
-			if n_req != 0:
-				t_requ_data[n_req].append(desired_time)
-				d_requ_data[n_req].append(distance)
+		# for row in c.execute("SELECT * FROM requests"):
+		# 	n_req, desired_time, x, y = row[0], row[5], row[7], row[8]
+		# 	distance = sqrt(x**2 + y**2)
+		# 	if n_req != 0:
+		# 		t_requ_data[n_req].append(desired_time)
+		# 		d_requ_data[n_req].append(distance)
 
-		d_requ_data.plot(self.save_image_data)
-		t_requ_data.plot(self.save_image_data)
+		# d_requ_data.plot(self.save_image_data)
+		# t_requ_data.plot(self.save_image_data)
 
+		conn.close()
+
+	def result_data_DB_leilao_specific(self, id_req, desired_time, ini_time, end_time):
+
+		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
+		data = (n_req, v_veh, n_ins, id_req, 0, desired_time, ini_time, end_time)
+		conn = connect('persistent_data.db')
+		c = conn.cursor()
+		c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
+
+		conn.commit()
+		conn.close()
+
+	def result_data_DB_leilao_global(self, rtime, obj, w_times_mean, w_times_std, t_times_mean, t_times_std):
+
+		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
+		data = (n_req, v_veh, n_ins, 0, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, 0)
+		conn = connect('persistent_data.db')
+		c = conn.cursor()
+		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
+
+		conn.commit()
 		conn.close()
 
 	def result_data_DB(self, rtime, obj):
@@ -363,7 +386,7 @@ class Resultado:
 		opt = 1
 		w_times = np.array([])
 		t_times = np.array([])
-		specific_data = []
+		specific_data = list()
 		for req in req_data:
 			desired_time = req[4]
 			ini_time = None

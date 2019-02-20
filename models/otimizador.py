@@ -14,6 +14,9 @@ class Otimizador:
 
 	def __init__(self, ins_id):
 		self.ins = Instancia('{}.json'.format(ins_id))
+		self.C0 = 0.25
+		self.C1 = 0.5
+		self.C2 = 0.25
 
 	def begin(self):
 		M = GRB.INFINITY
@@ -38,13 +41,13 @@ class Otimizador:
 		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
-		exp += 0.33*quicksum( (x[ijk] * tau[ij])
+		exp += self.C0*quicksum(x[ijk] * tau[ij]
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
-		exp += 0.33*quicksum( (t[ik] - T[i])
-		                    for ik in instantes for i in origens
+		exp += self.C1*quicksum((T[ik] - t[i]) * (T[ik] - t[i])
+		                    for i in origens for ik in instantes
 		                    if ik[0] == i)
-		exp += 0.33*quicksum( (t[(i+n,k)] - t[(i,k)])
+		exp += self.C2*quicksum(T[(i+n,k)] - T[(i,k)]
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)

@@ -14,6 +14,9 @@ from getopt import getopt, GetoptError
 from sqlite3 import connect
 from sys import argv
 from os import listdir, path
+from ast import literal_eval
+
+import pandas as pd
 
 if __name__ == "__main__":
 
@@ -123,8 +126,6 @@ if __name__ == "__main__":
                     if post_case == 'new':
                         if ins_id not in listdir(resultados_path):
                             Otimizador(ins_id).begin()
-                    else:
-                        Otimizador(ins_id).begin()
 
             elif r == 'S':
                 stop = True
@@ -138,11 +139,33 @@ if __name__ == "__main__":
         stop = False
         while not stop:
             r = raw_input('Qual instancia(s) realizar leilao? > ')
+            if r.split('/')[0] == 'all':
+                actual_path = path.dirname(path.abspath("__file__"))
+                instancia_path = path.join(actual_path,'models\\instancias')
+                resultados_path = path.join(actual_path,'resultados')
+                list_resultados = listdir(resultados_path)
+                for filename in listdir(instancia_path):
+                    print filename
+                    if filename != '00_00_000.json':
+                        ins_id = filename.split('.')[0]
+                        n_req, n_veh, n_ins = [int(x) for x in ins_id.split('_')]
+                        try:
+                            post_case = r.split('/')[1]
+                        except IndexError:
+                            post_case = ''
+                        if post_case == 'new':
+                            if ins_id not in list_resultados:
+                                Otimizador(ins_id).begin()
+                        else:
+                            l = Leilao(ins_id)
+                            l.begin()
+                            l.result()
             if r == 'S':
                 stop = True
             else:
-                Leilao(r).begin()
-
+                l = Leilao(r)
+                l.begin()
+                l.result()
 
     if resultar:
         Resultado(Instancia('00_00_000.json')).plot_global_result_data()

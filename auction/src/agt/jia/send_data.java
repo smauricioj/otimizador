@@ -22,7 +22,7 @@ public class send_data extends DefaultInternalAction {
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
         // execute the internal action       
-        out.write(args[0]+","+args[1]+"\n");        
+        out.write(args[0]+";"+args[1]+"\n");        
         return true;
     }
     
