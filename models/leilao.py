@@ -65,14 +65,14 @@ class Leilao:
 				file.close()
 		
 		args = 'java '
-		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.JaCaMoLauncher '
+		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.RunJaCaMoProject '
 		args += '{}/auction/auction.jcm'.format(self.actual_path)
 		t0 = clock()
 		check_call(args.split(' '), shell = True)
 		self.rtime = clock() - t0
 
 	def result(self):
-		df = pd.read_csv(path.join(self.actual_path, 'tmp\\data.csv'), sep = ';', header = None)
+		df = pd.read_csv(path.join(self.actual_path, 'auction\\tmp\\data.csv'), sep = ';', header = None)
 		w_times = np.array([])
 		t_times = np.array([])
 		for _, serie in df.iterrows():

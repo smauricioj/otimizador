@@ -67,9 +67,11 @@ mas auction {
 				     queue_number(6)
 			focus: tools.queue
 		}
-		
+
+	
 		agent end_time: end_time.asl {
-			beliefs: queue_number(7), end_time(500)
+			beliefs: end_time(2000),
+					 queue_number(7)
 			focus: tools.queue
 		}
 
