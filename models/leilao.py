@@ -19,13 +19,16 @@ class Leilao:
 	def __init__(self, ins_id):
 		self.actual_path = path.dirname(path.abspath("__file__"))
 		self.rtime = None
+		self.optimal_method = 0
 		if ins_id != 'static':
 			self.static = False
 			self.ins = Instancia('{}.json'.format(ins_id))
 		else:
 			self.static = True
 			self.ins = Instancia('00_00_000.json')
-		self.res = Resultado(self.ins)
+		self.res = Resultado(self.ins, self.optimal_method)
+		with open(path.join(self.actual_path, 'tmp\\data.csv'), 'w') as file:
+			file.close()
 
 
 	def begin(self):
@@ -91,6 +94,3 @@ class Leilao:
 		                w_times = np.append(w_times, ini_time - desired_time)
 		                t_times = np.append(t_times, end_time - ini_time)
 		self.res.result_data_DB_leilao_global(self.rtime, 0, w_times.mean(), w_times.std(), t_times.mean(), t_times.std())
-		with open(path.join(self.actual_path, 'tmp\\data.csv'), 'w') as file:
-			file.close()
-

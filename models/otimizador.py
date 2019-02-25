@@ -14,9 +14,12 @@ class Otimizador:
 
 	def __init__(self, ins_id):
 		self.ins = Instancia('{}.json'.format(ins_id))
-		self.C0 = 0.25
-		self.C1 = 0.5
-		self.C2 = 0.25
+		self.C0 = 0.33
+		self.C1 = 0.33
+		self.C2 = 0.33
+
+		self.optimal_method = 1
+		self.res = resultado.Resultado(self.ins, self.optimal_method)
 
 	def begin(self):
 		M = GRB.INFINITY
@@ -37,17 +40,17 @@ class Otimizador:
 		carga     = {(i,k):0   for i in locais for k in veiculos}
 		             
 		x = mod.addVars(viagens,           vtype=GRB.BINARY,     name="x")
-		t = mod.addVars(instantes, lb=0.0, vtype=GRB.CONTINUOUS, name="T")
+		t = mod.addVars(instantes, lb=0.0, vtype=GRB.CONTINUOUS, name="t")
 		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
 		exp += self.C0*quicksum(x[ijk] * tau[ij]
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
-		exp += self.C1*quicksum((T[ik] - t[i]) * (T[ik] - t[i])
+		exp += self.C1*quicksum((t[ik] - T[i])
 		                    for i in origens for ik in instantes
 		                    if ik[0] == i)
-		exp += self.C2*quicksum(T[(i+n,k)] - T[(i,k)]
+		exp += self.C2*quicksum(t[(i+n,k)] - t[(i,k)]
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)
@@ -90,37 +93,43 @@ class Otimizador:
 						                         if ijk[1] in delta_menos_destino
 						                         and ijk[0] == i+n
 						                         and ijk[2] == k)
+
 					dk = (i+n,k)
 
 					mod.addConstr( n_visitas == n_visitas_destino )
 					mod.addConstr( t[ik] >= T[i])
 					mod.addConstr( t[dk] >= t[ik] )
+					mod.addConstr( T_max >= t[dk])
+					mod.addConstr( u[ik] >= q[i] )
+					mod.addConstr( Q >= u[ik])
  
 
 		for ij in arcos:
-		    i, j = ij[0], ij[1]
-		    qj = q.copy()
-		    del qj[i]
+			i, j = ij[0], ij[1]
 
-		    for k in veiculos:
-		        ik, jk = (i,k), (j,k)
-		        ijk = (i,j,k)
+			for k in veiculos:
+				ik, jk = (i,k), (j,k)
+				ijk = (i,j,k)
+				jik = (j,i,k)
 
-		        # n_demanda_destino = quicksum(qj[x]*x[ijk] for ijk in viagens for x in locais
-		        # 							 if ijk[0] != j)
+				if self.optimal_method == 1:
+					try:
+						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (s[i] + s[j] + 2*tau[ij])*x[jik] <=
+							           (1 - x[ijk] - x[jik])*T_max )
 
-		        mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
-		        
-		        mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
+						mod.addConstr( u[ik] + q[j] - u[jk] -(q[i]+q[j])*x[jik] <=
+							           (1 - x[ijk] - x[jik])*Q )
+					except KeyError:
+						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
 
-		        # try:
-		        # 	mod.addConstr( u[ik] <= Q - ( x[(0,i,k)]*(Q - max(qj.iterkeys(), key=(lambda key: q[key])) - q[i]) ) - n_demanda_destino )
-		        # except KeyError as e:
-		        # 	mod.addConstr( u[ik] <= Q - n_demanda_destino )
+						mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
 
-		        # mod.addConstr( q[i] <= u[ik] )
-		        # mod.addConstr( Q >= u[ik] )
+				elif self.optimal_method == 2:
+					mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
 
+					mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
+				else:
+					raise AttributeError('Optimal method errado')
 		        
 		for k in veiculos:   
 		    mod.addConstr( u[(2*n+1,k)] == 0 ) # Não há restrições para 'saidas' de
@@ -129,14 +138,16 @@ class Otimizador:
 		                                       #    Agora não.
 
 		mod.optimize()
-		print('Obj: %g' %mod.objVal)
-		print('Runtime: %g' %mod.runtime)
-		self.res = resultado.Resultado(self.ins)
-		if mod.objVal <= 100000:
-			for v in mod.getVars():
-				self.res.add_trip('{}={}'.format(v.varName, v.x))
-			# self.res.fig_requests()
-			self.res.fig_routes()
-			self.res.result_data_DB(mod.runtime, mod.objVal)
-		else:
-			print 'deu nada, só vai'
+		try:
+			print('Obj: %g' %mod.objVal)
+			print('Runtime: %g' %mod.runtime)
+			if mod.objVal <= 100000:
+				for v in mod.getVars():
+					self.res.add_trip('{}={}'.format(v.varName, v.x))
+				# self.res.fig_requests()
+				self.res.fig_routes()
+				self.res.result_data_DB(mod.runtime, mod.objVal)
+			else:
+				print 'deu nada, só vai'
+		except AttributeError:
+			pass

@@ -100,10 +100,11 @@ class DataList(list):
 
 class Resultado:
 	
-	def __init__(self, ins):
+	def __init__(self, ins, optimal_method = 1):
 		self.ins = ins
 		self.fmt = 'png'
 		self.mapa_limites = [-5,5]
+		self.optimal_method = optimal_method
 
 		self.rotas = []
 		self.tempos = []
@@ -148,7 +149,7 @@ class Resultado:
 
 		index, value = string.split('=')
 		var, tup = index[:-1].split('[')
-		if var == 'T':
+		if var == 't':
 			i, k = [int(x) for x in tup.split(',')]
 			self.tempos[k].append((i,float(value)))
 		elif var == 'x' and aprox(float(value), 1.0, 0.0001):
@@ -361,7 +362,7 @@ class Resultado:
 	def result_data_DB_leilao_specific(self, id_req, desired_time, ini_time, end_time):
 
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		data = (n_req, v_veh, n_ins, id_req, 0, desired_time, ini_time, end_time)
+		data = (n_req, v_veh, n_ins, id_req, self.optimal_method, desired_time, ini_time, end_time)
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
@@ -372,7 +373,7 @@ class Resultado:
 	def result_data_DB_leilao_global(self, rtime, obj, w_times_mean, w_times_std, t_times_mean, t_times_std):
 
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		data = (n_req, v_veh, n_ins, 0, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, 0)
+		data = (n_req, v_veh, n_ins, self.optimal_method, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, 0)
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
@@ -383,7 +384,6 @@ class Resultado:
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		opt = 1
 		w_times = np.array([])
 		t_times = np.array([])
 		specific_data = list()
@@ -401,8 +401,8 @@ class Resultado:
 					end_time = tup[1]
 			w_times = np.append(w_times, ini_time - desired_time)
 			t_times = np.append(t_times, end_time - ini_time)
-			specific_data.append( (n_req, v_veh, n_ins, req[0], opt, desired_time, ini_time, end_time) )
-		global_data = [(n_req, v_veh, n_ins, opt,
+			specific_data.append( (n_req, v_veh, n_ins, req[0], self.optimal_method, desired_time, ini_time, end_time) )
+		global_data = [(n_req, v_veh, n_ins, self.optimal_method,
 			            w_times.mean(), w_times.std(),
 			            t_times.mean(), t_times.std(),
 			            rtime, obj)]
