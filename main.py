@@ -145,10 +145,10 @@ if __name__ == "__main__":
 
     if resultar:
         # Resultado(Instancia('00_00_000.json')).plot_global_result_data()
-        ins = Instancia('08_04_002.json')
+        ins = Instancia('05_02_007.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
-            if k[0] == 5:
+            if k[0] == 10:
                 print "Key: ",k," and Value: ",v
 
     if tabelar:                
@@ -163,9 +163,9 @@ if __name__ == "__main__":
         #         print v
         # exit()
 
-        # db_man.execute('DELETE FROM global_results WHERE n_req = 6 and n_veh = 1 ')
+        # db_man.execute('DELETE FROM global_results WHERE runtime > 1201 ')
 
-        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 5 and n_veh = 2 and n_ins = 5 and opt >= 1 ORDER BY opt"):
+        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 5 and n_veh = 2 and n_ins = 7 ORDER BY opt"):
             print row
 
         # for filename in listdir(instancia_path):

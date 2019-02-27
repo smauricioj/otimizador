@@ -21,7 +21,7 @@ class Otimizador:
 		self.optimal_method = 1
 		self.res = resultado.Resultado(self.ins, self.optimal_method)
 
-		self.save_lp = True
+		self.save_lp = False
 		if self.optimal_method == 1:
 			self.output_lp_name = 'out_lifted.lp'
 		elif self.optimal_method == 2:
@@ -122,12 +122,12 @@ class Otimizador:
 
 				if self.optimal_method == 1:
 					try:
-						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (s[i] + s[j] + 2*tau[ij])*x[jik] <=
-							           (1 - x[ijk] - x[jik])*T_max )
+						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (t[ik] + s[j] + tau[ij] - t[jk])*x[jik] <= (1 - x[ijk] - x[jik])*T_max )
 
-						mod.addConstr( u[ik] + q[j] - u[jk] -(q[i]+q[j])*x[jik] <=
-							           (1 - x[ijk] - x[jik])*Q )
-					except KeyError:
+						mod.addConstr( u[ik] + q[j] - u[jk] - (q[i] + q[j])*x[jik] <= (1 - x[ijk] - x[jik])*Q )
+						# print 'deu para:',i,' ',j,' ',k
+					except KeyError as e:
+						print e
 						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
 
 						mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
@@ -164,25 +164,15 @@ class Otimizador:
 		# 			pass
 
 		mod.optimize()
+		
 		# mod.computeIIS()
-		# if self.save_lp:
-		# 	mod.write('temp.ilp')
-		# 	f1 = open('temp.ilp', 'r')
-		# 	f2 = open('lifted_IIS.ilp', 'w')
-		# 	for line in f1:
-		# 		l = line.replace('[','_')
-		# 		l = l.replace(',','_')
-		# 		l = l.replace(']','')
-		# 		f2.write(l)
-		# 	f1.close()
-		# 	f2.close()
 
 		# exit()
 
 		try:
 			if mod.objVal <= 100000 :
-		# print('Obj: %g' %mod.objVal)
-		# print('Runtime: %g' %mod.runtime)
+				# print('Obj: %g' %mod.objVal)
+				# print('Runtime: %g' %mod.runtime)
 				for v in mod.getVars():
 					self.res.add_trip('{}={}'.format(v.varName, v.x))
 				# self.res.fig_requests()
@@ -192,3 +182,15 @@ class Otimizador:
 				self.res.reset_data_DB()
 		except AttributeError:
 			self.res.reset_data_DB()
+
+		if self.save_lp:
+			mod.write('temp.lp')
+			f1 = open('temp.lp', 'r')
+			f2 = open(self.output_lp_name, 'w')
+			for line in f1:
+				l = line.replace('[','_')
+				l = l.replace(',','_')
+				l = l.replace(']','')
+				f2.write(l)
+			f1.close()
+			f2.close()
