@@ -18,7 +18,7 @@ public class schedule_cost extends DefaultInternalAction {
 	private double desired_time = 0;
 	private double known_time = 0;
 	
-	private double travel_distance(ListTerm event, ListTerm last_event) throws NoValueException {
+	private double travel_distance(ListTerm event, ListTerm last_event, TransitionSystem ts) throws NoValueException {
 		
 		NumberTerm x0Term = (NumberTerm)last_event.get(3);
 		NumberTerm y0Term = (NumberTerm)last_event.get(4);
@@ -28,12 +28,15 @@ public class schedule_cost extends DefaultInternalAction {
 		double y0 = y0Term.solve();
 		double x1 = x1Term.solve();
 		double y1 = y1Term.solve();
+        // ts.getAg().getLogger().info("lista posições -> "+x0+" "+x1+" "+y0+" "+y1);
+        // double r = Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) * 100.0) / 100.0;
+        // ts.getAg().getLogger().info("resultado -> "+r);
 		
 		return Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) * 100.0) / 100.0;
 		
 	}
 	
-	private double[] metrics(ListTerm Sch) throws NoValueException {
+	private double[] metrics(ListTerm Sch, TransitionSystem ts) throws NoValueException {
 		/** Cálculo das métricas de avaliação do agendamento
 		 * 		Recebe:  ListTerm Sch -> agendamento a ser avaliado
 		 * 		Retorna: double[3]    -> métricas de avaliação
@@ -98,7 +101,7 @@ public class schedule_cost extends DefaultInternalAction {
 			
 		}
 		
-		metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event);		
+		metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event, ts);		
 		
 		return metrics;
 	}
@@ -106,7 +109,7 @@ public class schedule_cost extends DefaultInternalAction {
 	private double kappa_ij(ListTerm Sch, int i, int j, TransitionSystem ts) throws NoValueException {		
 		/** Calcula custo da inserção do pedido em i e j **/
 		
-    	double[] metrics_base = this.metrics(Sch);
+    	double[] metrics_base = this.metrics(Sch, ts);
     	double final_kappa = 0;
     	
     	/** Os eventos no Sch são definidos por:
@@ -149,7 +152,7 @@ public class schedule_cost extends DefaultInternalAction {
     		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
 
     		NumberTerm t0Term = (NumberTerm)last_event.get(1);
-    		double tempo_viagem = this.travel_distance(event, last_event);
+    		double tempo_viagem = this.travel_distance(event, last_event, ts);
     		double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
     		event.set(1, ASSyntax.createNumber(Math.max(this.desired_time, instante_atendimento)));
     		
@@ -160,10 +163,10 @@ public class schedule_cost extends DefaultInternalAction {
     	 *  usando método interno e depois somadas, ponderando com
     	 *  os parâmetros de controle. Esse é o resultado final **/
     	
-    	double[] metrics = this.metrics(Sch_novo);
+    	double[] metrics = this.metrics(Sch_novo, ts);
     	
-    	ts.getAg().getLogger().info("METRICAS_B "+metrics[0]+" "+metrics[1]+" "+metrics[2]);
-    	ts.getAg().getLogger().info("METRICAS_A "+metrics_base[0]+" "+metrics_base[1]+" "+metrics_base[2]);
+    	// ts.getAg().getLogger().info("METRICAS_B "+metrics[0]+" "+metrics[1]+" "+metrics[2]);
+    	// ts.getAg().getLogger().info("METRICAS_A "+metrics_base[0]+" "+metrics_base[1]+" "+metrics_base[2]);
     	
     	final_kappa += parameters.CONTROL_C0*(metrics[0]-metrics_base[0]);
     	final_kappa += parameters.CONTROL_C1*(metrics[1]-metrics_base[1]);

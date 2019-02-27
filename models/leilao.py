@@ -27,7 +27,7 @@ class Leilao:
 			self.static = True
 			self.ins = Instancia('00_00_000.json')
 		self.res = Resultado(self.ins, self.optimal_method)
-		with open(path.join(self.actual_path, 'tmp\\data.csv'), 'w') as file:
+		with open(path.join(self.actual_path, 'auction\\tmp\\data.csv'), 'w') as file:
 			file.close()
 
 

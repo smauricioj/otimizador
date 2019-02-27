@@ -9,7 +9,7 @@ import jason.asSyntax.*;
 @SuppressWarnings("serial")
 public class schedule_update extends DefaultInternalAction {
 	
-	private double travel_distance(ListTerm event, ListTerm last_event) throws NoValueException {
+	private double travel_distance(ListTerm event, ListTerm last_event, TransitionSystem ts) throws NoValueException {
 		
 		NumberTerm x0Term = (NumberTerm)last_event.get(3);
 		NumberTerm y0Term = (NumberTerm)last_event.get(4);
@@ -86,7 +86,7 @@ public class schedule_update extends DefaultInternalAction {
     		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
 
     		NumberTerm t0Term = (NumberTerm)last_event.get(1);
-    		double tempo_viagem = this.travel_distance(event, last_event);
+    		double tempo_viagem = this.travel_distance(event, last_event, ts);
     		double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
 			event.set(1, ASSyntax.createNumber(Math.max(Dt.solve(), instante_atendimento)));
     		

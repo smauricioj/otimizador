@@ -144,7 +144,12 @@ if __name__ == "__main__":
                 method(r)
 
     if resultar:
-        Resultado(Instancia('00_00_000.json')).plot_global_result_data()
+        # Resultado(Instancia('00_00_000.json')).plot_global_result_data()
+        ins = Instancia('08_04_002.json')
+        tau = ins.get_tau()
+        for k, v in tau.iteritems():
+            if k[0] == 5:
+                print "Key: ",k," and Value: ",v
 
     if tabelar:                
         # actual_path = path.dirname(path.abspath("__file__"))
@@ -158,12 +163,10 @@ if __name__ == "__main__":
         #         print v
         # exit()
 
-        db_man.execute('DELETE FROM global_results WHERE n_req == 6 and n_veh == 1 ')
+        # db_man.execute('DELETE FROM global_results WHERE n_req = 6 and n_veh = 1 ')
 
-        db_man.execute('DELETE FROM specific_results WHERE n_req == 6 and n_veh == 1 ')
-
-        # for row in db_man.execute("SELECT * FROM global_results WHERE n_req == 5 "):
-        #     print row
+        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 5 and n_veh = 2 and n_ins = 5 and opt >= 1 ORDER BY opt"):
+            print row
 
         # for filename in listdir(instancia_path):
         #     print filename

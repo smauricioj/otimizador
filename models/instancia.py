@@ -240,15 +240,25 @@ class Instancia:
                     #   ou entre origem de drop e destino de drop
                     #   o tau é a distância entre o local e o deposito
                     if fonte in id_drops:
-                        if antro in id_drops or antro-self.n in id_picks:
-                            tau[arco] = 0
-                        elif antro in id_picks or antro-self.n in id_drops:
-                            tau[arco] = self.__get_distance_deposito(df_total,fonte)
+                        if antro > self.n:
+                            antro = antro-self.n
+                            if antro in id_drops:
+                                tau[arco] = self.__get_distance(df_total,fonte,antro)
+                            else:
+                                tau[arco] = 0                          
+                        else:
+                            if antro in id_drops:
+                                tau[arco] = 0
+                            else:
+                                tau[arco] = self.__get_distance_deposito(df_total,antro)
                     else:
                         if antro > self.n:
                             antro = antro-self.n
-                        # se não, o tau é a distância entre os dois locais
-                        tau[arco] = self.__get_distance(df_total,fonte,antro)
+                        if antro in id_drops:
+                            # se não, o tau é a distância entre os dois locais
+                            tau[arco] = self.__get_distance(df_total,fonte,antro)
+                        else:
+                            tau[arco] = self.__get_distance_deposito(df_total,fonte)
             # Se a fonte for um destino de pedido                   
             else:
                 fonte = fonte-self.n
@@ -272,9 +282,9 @@ class Instancia:
                             tau[arco] = self.__get_distance(df_total,fonte,antro)
                     else:
                         if antro in id_picks:
-                            tau[arco] = self.__get_distance_deposito(df_total,antro)
+                            tau[arco] = 0
                         else:
-                            tau[arco] = 0               
+                            tau[arco] = self.__get_distance_deposito(df_total,antro)               
         return tau
 
     def get_pos_requests(self):

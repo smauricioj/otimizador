@@ -7,7 +7,7 @@
  *            d = instante desejado de atendimento
  * 			  x, y = posicao cartesiana de atendimento */
 
-schedule([["client_000",0,0,5,5]]).
+schedule([["client_000",0,0,0,0]]).
 
 /* Initial goals */
 

@@ -383,7 +383,7 @@ class Resultado:
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
-		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
+		n_req, n_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
 		w_times = np.array([])
 		t_times = np.array([])
 		specific_data = list()
@@ -401,8 +401,8 @@ class Resultado:
 					end_time = tup[1]
 			w_times = np.append(w_times, ini_time - desired_time)
 			t_times = np.append(t_times, end_time - ini_time)
-			specific_data.append( (n_req, v_veh, n_ins, req[0], self.optimal_method, desired_time, ini_time, end_time) )
-		global_data = [(n_req, v_veh, n_ins, self.optimal_method,
+			specific_data.append( (n_req, n_veh, n_ins, req[0], self.optimal_method, desired_time, ini_time, end_time) )
+		global_data = [(n_req, n_veh, n_ins, self.optimal_method,
 			            w_times.mean(), w_times.std(),
 			            t_times.mean(), t_times.std(),
 			            rtime, obj)]
@@ -414,6 +414,24 @@ class Resultado:
 		for data in specific_data:
 			c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
 
+		conn.commit()
+		conn.close()
+
+	def reset_data_DB(self):
+		n_req, n_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
+		data = (n_req, n_veh, n_ins, self.optimal_method)
+		conn = connect('persistent_data.db')
+		c = conn.cursor()
+		c.execute(''' DELETE FROM global_results
+					  WHERE n_req = {} and
+					        n_veh = {} and
+					        n_ins = {} and
+					        opt = {}  '''.format(*data))
+		c.execute(''' DELETE FROM specific_results
+					  WHERE n_req = {} and
+					        n_veh = {} and
+					        n_ins = {} and
+					        opt = {}  '''.format(*data))
 		conn.commit()
 		conn.close()
 

@@ -5,6 +5,8 @@ gurobi.log
 resultados/
 models/instancias/
 auction/tmp/
+*.lp
+*.ilp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

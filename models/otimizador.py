@@ -21,6 +21,14 @@ class Otimizador:
 		self.optimal_method = 1
 		self.res = resultado.Resultado(self.ins, self.optimal_method)
 
+		self.save_lp = True
+		if self.optimal_method == 1:
+			self.output_lp_name = 'out_lifted.lp'
+		elif self.optimal_method == 2:
+			self.output_lp_name = 'out_base.lp'
+		else:
+			self.output_lp_name = None
+
 	def begin(self):
 		M = GRB.INFINITY
 		n, m, Q   = self.ins.n, self.ins.m, self.ins.Q
@@ -110,7 +118,7 @@ class Otimizador:
 			for k in veiculos:
 				ik, jk = (i,k), (j,k)
 				ijk = (i,j,k)
-				jik = (j,i,k)
+				jik = (j,i,k) #motivo do try abaixo
 
 				if self.optimal_method == 1:
 					try:
@@ -137,17 +145,50 @@ class Otimizador:
 		                                       #    poderia ser qualquer valor.
 		                                       #    Agora não.
 
+		# with open('var.txt', 'r') as file:
+		# 	for line in file:
+		# 		l = line.split(' ')
+		# 		r_hand = float(l[-1].replace('\n',''))
+		# 		l_hand = l[0].split('_')
+		# 		var = l_hand[0]
+		# 		if var == 'x':
+		# 			index = (int(l_hand[1]),int(l_hand[2]),int(l_hand[3]))
+		# 			mod.addConstr( x[index] == r_hand )
+		# 		elif var in ['t', 'u']:
+		# 			index = (int(l_hand[1]),int(l_hand[2]))
+		# 			if var == 't':
+		# 				mod.addConstr( t[index] == r_hand )
+		# 			else:
+		# 				mod.addConstr( u[index] == r_hand )
+		# 		else:
+		# 			pass
+
 		mod.optimize()
+		# mod.computeIIS()
+		# if self.save_lp:
+		# 	mod.write('temp.ilp')
+		# 	f1 = open('temp.ilp', 'r')
+		# 	f2 = open('lifted_IIS.ilp', 'w')
+		# 	for line in f1:
+		# 		l = line.replace('[','_')
+		# 		l = l.replace(',','_')
+		# 		l = l.replace(']','')
+		# 		f2.write(l)
+		# 	f1.close()
+		# 	f2.close()
+
+		# exit()
+
 		try:
-			print('Obj: %g' %mod.objVal)
-			print('Runtime: %g' %mod.runtime)
-			if mod.objVal <= 100000:
+			if mod.objVal <= 100000 :
+		# print('Obj: %g' %mod.objVal)
+		# print('Runtime: %g' %mod.runtime)
 				for v in mod.getVars():
 					self.res.add_trip('{}={}'.format(v.varName, v.x))
 				# self.res.fig_requests()
 				self.res.fig_routes()
 				self.res.result_data_DB(mod.runtime, mod.objVal)
-			else:
-				print 'deu nada, só vai'
+			else :
+				self.res.reset_data_DB()
 		except AttributeError:
-			pass
+			self.res.reset_data_DB()
