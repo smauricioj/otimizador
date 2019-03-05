@@ -47,14 +47,19 @@ public class schedule_cost extends DefaultInternalAction {
 		double[] metrics = new double[3]; // retorno final
 		List<String> cliente_list = new ArrayList<String>(); // lista com o nome dos clientes sendo atendidos
 		List<Double> pick_up_list = new ArrayList<Double>(); // lista com os tempos de atendimento
+		
 		ListTerm final_event = ASSyntax.createList();
 		for (int i = 0; i < 3; i++) {
-			final_event.add(ASSyntax.createNumber(0));
+			final_event.add(ASSyntax.createNumber(0)); //dummies
 		}
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
 			// final_event é criado para garantir que o veículo volta pro depósito no fim da operação
 			// (ou que pelo menos isso é considerado na hora de calcular as métricas haha)
+		
+		ListTerm later_event = (ListTerm)Sch.get(Sch.size()-1);
+		NumberTerm later_atendimento = (NumberTerm)later_event.get(1);
+			// later_event usado pra calcular se a rota respeita o limite de tempo máximo da simulação
 		
 		for (int index = 0; index < Sch.size(); index++) {
     		ListTerm event = (ListTerm)Sch.get(index); // evento sendo atualmente avaliado
@@ -92,16 +97,21 @@ public class schedule_cost extends DefaultInternalAction {
 				metrics[2] += atendimento.solve() - pick_up_list.remove(cliente_index);				
 			}
 			
-			if (cliente_list.size() > parameters.VEHICLE_CAPACITY) {
+			if (cliente_list.size() > parameters.VEHICLE_CAPACITY || atendimento.solve() > parameters.MAX_TIME) {
 				/** Se, a qualquer momento, o numero de clientes passar 
-				 *  da capacidade do veículo, custo é infinito **/
+				 *  da capacidade do veículo ou o instante de atendimento
+				 *  for maior do que a simulação, o custo é infinito **/
 				metrics[0] = Double.POSITIVE_INFINITY;
 				break;
 			}
 			
 		}
 		
-		metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event, ts);		
+		if (this.travel_distance(later_event, final_event, ts) + later_atendimento.solve() > parameters.MAX_TIME ) {
+			metrics[0] = Double.POSITIVE_INFINITY;
+		} else {
+			metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event, ts);
+		} /** Se é possível terminar a rota antes de acabar a simulação, ok, se não infinito **/	
 		
 		return metrics;
 	}

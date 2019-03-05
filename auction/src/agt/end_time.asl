@@ -10,6 +10,11 @@
 	<-	.broadcast(tell, end);
 		.wait(E);
 		.stopMAS.
+
++infeasible : end_time(E)
+	<-  .wait(E);
+		.stopMAS.
+		
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
 

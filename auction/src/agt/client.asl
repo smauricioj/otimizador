@@ -18,9 +18,14 @@
 	   
 +!decide : .findall(b(V,A), bid(V)[source(A)], L) & .length(L, N) & N >= 1
 	<- 	.min(L,b(V,W));
-    	.print("Winner is ", W, " with ", V);
-    	.broadcast(tell, winner(W));
-    	inc.
+		if (V >= 9223372036854775800) {
+			.print("Impossible to perform my request");
+			.send("end_time",tell,infeasible)
+		} else {
+    		.print("Winner is ", W, " with ", V);
+    		.broadcast(tell, winner(W));
+    		inc;			
+		}.
 		
 +!decide <-	.wait(30); !!decide.
 
