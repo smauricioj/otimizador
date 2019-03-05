@@ -30,6 +30,7 @@ class Instancia:
         self.__requests = d['requests']
         self.__static_data = d['static_data']
         self.__service_time = d['static_data']['service_time']
+        self.__df_total = DataFrame(self.__requests)
         self.n = len(self.__requests)
         self.m = d['static_data']['number_of_vehicles']
         self.Q = d['static_data']['max_vehicle_capacity']
@@ -41,25 +42,25 @@ class Instancia:
         self.deposito_x = 0
         self.deposito_y = 0
         
-    def __get_distance(self, df, fonte, antro):
+    def __get_distance(self, fonte, antro):
         '''
         Função genérica de distância entre 2 pontos
             a partir dos dados de um DataFrame
         '''
-        x1 = df.get_value(fonte-1,"service_point_x")
-        y1 = df.get_value(fonte-1,"service_point_y")
-        x2 = df.get_value(antro-1,"service_point_x")
-        y2 = df.get_value(antro-1,"service_point_y")
+        x1 = self.__df_total.get_value(fonte-1,"service_point_x")
+        y1 = self.__df_total.get_value(fonte-1,"service_point_y")
+        x2 = self.__df_total.get_value(antro-1,"service_point_x")
+        y2 = self.__df_total.get_value(antro-1,"service_point_y")
         return round(sqrt( (x1-x2)**2 + (y1-y2)**2 ), 2)
         
-    def __get_distance_deposito(self, df, local):
+    def __get_distance_deposito(self, local):
         '''
         Função genérica de distância entre 1 ponto
             e o local do depósito
             a partir dos dados de um DataFrame
         '''
-        x1 = df.get_value(local-1,"service_point_x")
-        y1 = df.get_value(local-1,"service_point_y")
+        x1 = self.__df_total.get_value(local-1,"service_point_x")
+        y1 = self.__df_total.get_value(local-1,"service_point_y")
         x2 = self.deposito_x
         y2 = self.deposito_y
         return round(sqrt( (x1-x2)**2 + (y1-y2)**2 ), 2)
@@ -179,6 +180,7 @@ class Instancia:
             addEdge(graph, 0, origem_pedido)
             addEdge(graph, destino_pedido, 2*self.n+1)
             addEdge(graph, origem_pedido, destino_pedido)
+            addEdge(graph, destino_pedido, origem_pedido)
 
             # Para todos os outros pedidos
             for outro_pedido in pedidos:
@@ -225,11 +227,11 @@ class Instancia:
             if (fonte_depo, antro_depo) == (True, True):
                 tau[arco] = 0
             elif (fonte_depo, antro_depo) == (True, False):
-                tau[arco] = self.__get_distance_deposito(df_total, antro)
+                tau[arco] = self.__get_distance_deposito(antro)
             elif (fonte_depo, antro_depo) == (False, True):
-                tau[arco] = self.__get_distance_deposito(df_total, fonte)
+                tau[arco] = self.__get_distance_deposito(fonte)
             else:
-                tau[arco] = self.__get_distance(df_total, fonte, antro)
+                tau[arco] = self.__get_distance(fonte, antro)
         return tau
 
     def get_pos_requests(self):
@@ -243,10 +245,9 @@ class Instancia:
         Método usado na criação de imagems que apresentam os
         resultados obtidos
         '''
-        df = DataFrame(self.__requests)
         data = []
         columns = ["service_point_x","service_point_y","service_type","desired_time"]
-        for i, r in enumerate(list(df[columns].values)):
+        for i, r in enumerate(list(self.__df_total[columns].values)):
             id_pedido = i+1
             x,y,t,d = float(r[0]),float(r[1]),str(r[2]),int(r[3])
             data.append((id_pedido,x,y,t,d))
