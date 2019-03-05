@@ -18,8 +18,10 @@ class Otimizador:
 		self.C1 = 0.33
 		self.C2 = 0.33
 
-		self.optimal_method = 1
+		self.optimal_method = 2
 		self.res = resultado.Resultado(self.ins, self.optimal_method)
+
+		self.save_data_DB = True
 
 		self.save_lp = False
 		if self.optimal_method == 1:
@@ -73,9 +75,9 @@ class Otimizador:
 		    	                 and ijk[0] == i)
 
 		    if i == 0:
-		        mod.addConstr( n_visitas == m )
+		        mod.addConstr( n_visitas == m, name = "n_visitas_depo")
 		    elif i != 2*n+1:
-		        mod.addConstr( n_visitas == 1 )
+		        mod.addConstr( n_visitas == 1, name = "n_visitas_{}".format(i))
 		    else:
 		    	pass
 		        
@@ -85,11 +87,11 @@ class Otimizador:
 		        sum_saida = quicksum( x[ijk] for ijk in [(i,j,k) for j in delta_menos] )
 		        
 		        if i == 2*n+1:
-		            mod.addConstr( sum_saida - sum_entrada == -1 )
+		            mod.addConstr( sum_saida - sum_entrada == -1, name = "fluxo_{}_{}".format(i,k))
 		        elif i == 0:
-		            mod.addConstr( sum_saida - sum_entrada == 1 )
+		            mod.addConstr( sum_saida - sum_entrada == 1, name = "fluxo_{}_{}".format(i,k) )
 		        else:
-		            mod.addConstr( sum_saida - sum_entrada == 0 )
+		            mod.addConstr( sum_saida - sum_entrada == 0, name = "fluxo_{}_{}".format(i,k) )
 		                   
 		        if i in origens:
 					delta_menos_destino = [b for (a,b) in arcos if a == i+n]
@@ -104,40 +106,39 @@ class Otimizador:
 
 					dk = (i+n,k)
 
-					mod.addConstr( n_visitas == n_visitas_destino )
-					mod.addConstr( t[ik] >= T[i])
-					mod.addConstr( t[dk] >= t[ik] )
-					mod.addConstr( T_max >= t[dk])
-					mod.addConstr( u[ik] >= q[i] )
-					mod.addConstr( Q >= u[ik])
+					mod.addConstr( n_visitas == n_visitas_destino, name = "consistencia_{}_{}".format(i,k) )
+					mod.addConstr( t[ik] >= T[i], name = "inicio_desejado_viagem_{}_{}".format(i,k))
+					mod.addConstr( t[dk] >= t[ik], name = "fim_apos_inicio_viagem_{}_{}".format(i,k) )
+					mod.addConstr( T_max >= t[dk], name = "fim_antes_total_viagem_{}_{}".format(i,k))
+					mod.addConstr( u[ik] >= q[i], name = "partida_maior_demanda_carga_{}_{}".format(i,k) )
+					mod.addConstr( Q >= u[ik], name = "partida_menor_capacidade_carga_{}_{}".format(i,k))
  
 
 		for ij in arcos:
 			i, j = ij[0], ij[1]
+			iin = (i,i+n)
+			idp = (i,2*n+1)
+			ind = (i+n,2*n+1)
 
 			for k in veiculos:
 				ik, jk = (i,k), (j,k)
 				ijk = (i,j,k)
 				jik = (j,i,k) #motivo do try abaixo
 
-				if self.optimal_method == 1:
-					try:
-						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (t[ik] + s[j] + tau[ij] - t[jk])*x[jik] <= (1 - x[ijk] - x[jik])*T_max )
+				try:
+					mod.addConstr( u[ik] + q[j] - u[jk] - (q[i] + q[j])*x[jik] <= (1 - x[ijk] - x[jik])*Q, name = "elimina_subrota_capacidade_lifted_{}_{}_{}".format(i,j,k) )
+				except KeyError:
+					mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q, name = "elimina_subrota_capacidade_{}_{}_{}".format(i,j,k) )
 
-						mod.addConstr( u[ik] + q[j] - u[jk] - (q[i] + q[j])*x[jik] <= (1 - x[ijk] - x[jik])*Q )
-						# print 'deu para:',i,' ',j,' ',k
-					except KeyError as e:
-						print e
-						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
+				try:
+					if j in [_+1 for _ in range(n)]:
+						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (s[j] + tau[ij] - tau[iin] - s[i+n] - tau[ind])*x[jik] <= (1 - x[ijk])*T_max, name = "elimina_subrota_temporal_lifted_{}_{}_{}".format(i,j,k))
+					else:
+						mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] - (s[j] + tau[ij] - tau[idp])*x[jik] <= (1 - x[ijk])*T_max, name = "elimina_subrota_temporal_lifted_{}_{}_{}".format(i,j,k))
 
-						mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
+				except KeyError:
+					mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max, name = "elimina_subrota_temporal_{}_{}_{}".format(i,j,k) )
 
-				elif self.optimal_method == 2:
-					mod.addConstr( t[ik] + s[j] + tau[ij] - t[jk] <= (1 - x[ijk])*T_max )
-
-					mod.addConstr( u[ik] + q[j] - u[jk] <= (1 - x[ijk])*Q )
-				else:
-					raise AttributeError('Optimal method errado')
 		        
 		for k in veiculos:   
 		    mod.addConstr( u[(2*n+1,k)] == 0 ) # Não há restrições para 'saidas' de
@@ -169,19 +170,20 @@ class Otimizador:
 
 		# exit()
 
-		try:
-			if mod.objVal <= 100000 :
-				# print('Obj: %g' %mod.objVal)
-				# print('Runtime: %g' %mod.runtime)
-				for v in mod.getVars():
-					self.res.add_trip('{}={}'.format(v.varName, v.x))
-				# self.res.fig_requests()
-				self.res.fig_routes()
-				self.res.result_data_DB(mod.runtime, mod.objVal)
-			else :
+		if self.save_data_DB:
+			try:
+				if mod.objVal <= 100000 :
+					# print('Obj: %g' %mod.objVal)
+					# print('Runtime: %g' %mod.runtime)
+					for v in mod.getVars():
+						self.res.add_trip('{}={}'.format(v.varName, v.x))
+					# self.res.fig_requests()
+					self.res.fig_routes()
+					self.res.result_data_DB(mod.runtime, mod.objVal)
+				else :
+					self.res.reset_data_DB()
+			except AttributeError:
 				self.res.reset_data_DB()
-		except AttributeError:
-			self.res.reset_data_DB()
 
 		if self.save_lp:
 			mod.write('temp.lp')
