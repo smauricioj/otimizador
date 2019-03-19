@@ -4,12 +4,20 @@
 
 /* Initial goals */
 
+!start.
+
 /* Plans */
 
-+next(N) : queue_number(N) & end_time(E)
-	<-	.broadcast(tell, end);
++!start : .time(H,M,S)	<-  +initial_time(H,M,S).
+
++next(N) : queue_number(N) & end_time(E) & active(V) & .time(H,M,S) & .my_name(Name)
+	<-	?initial_time(IH,IM,IS);
+		jia.send_data(Name,((H-IH)*60*60)+((M-IM)*60)+S-IS)
+		.broadcast(tell, end);
 		.wait(E);
-		.stopMAS.
+		if (V == true) {
+			.stopMAS;
+		}.
 
 +infeasible : end_time(E)
 	<-  .wait(E);

@@ -18,109 +18,10 @@ public class schedule_cost extends DefaultInternalAction {
 	private double desired_time = 0;
 	private double known_time = 0;
 	
-	private double travel_distance(ListTerm event, ListTerm last_event, TransitionSystem ts) throws NoValueException {
-		
-		NumberTerm x0Term = (NumberTerm)last_event.get(3);
-		NumberTerm y0Term = (NumberTerm)last_event.get(4);
-		NumberTerm x1Term = (NumberTerm)event.get(3);
-		NumberTerm y1Term = (NumberTerm)event.get(4);
-		double x0 = x0Term.solve();
-		double y0 = y0Term.solve();
-		double x1 = x1Term.solve();
-		double y1 = y1Term.solve();
-        // ts.getAg().getLogger().info("lista posições -> "+x0+" "+x1+" "+y0+" "+y1);
-        // double r = Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) * 100.0) / 100.0;
-        // ts.getAg().getLogger().info("resultado -> "+r);
-		
-		return Math.round( Math.sqrt( Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2) ) * 100.0) / 100.0;
-		
-	}
-	
-	private double[] metrics(ListTerm Sch, TransitionSystem ts) throws NoValueException {
-		/** Cálculo das métricas de avaliação do agendamento
-		 * 		Recebe:  ListTerm Sch -> agendamento a ser avaliado
-		 * 		Retorna: double[3]    -> métricas de avaliação
-		 * 
-		 *  O vetor contém as métricas de: distância percorrida;
-		 *  atraso de atendimento; e tempo de viagem.**/
-		
-		double[] metrics = new double[3]; // retorno final
-		List<String> cliente_list = new ArrayList<String>(); // lista com o nome dos clientes sendo atendidos
-		List<Double> pick_up_list = new ArrayList<Double>(); // lista com os tempos de atendimento
-		
-		ListTerm final_event = ASSyntax.createList();
-		for (int i = 0; i < 3; i++) {
-			final_event.add(ASSyntax.createNumber(0)); //dummies
-		}
-		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
-		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
-			// final_event é criado para garantir que o veículo volta pro depósito no fim da operação
-			// (ou que pelo menos isso é considerado na hora de calcular as métricas haha)
-		
-		ListTerm later_event = (ListTerm)Sch.get(Sch.size()-1);
-		NumberTerm later_atendimento = (NumberTerm)later_event.get(1);
-			// later_event usado pra calcular se a rota respeita o limite de tempo máximo da simulação
-		
-		for (int index = 0; index < Sch.size(); index++) {
-    		ListTerm event = (ListTerm)Sch.get(index); // evento sendo atualmente avaliado
-			StringTerm cliente = (StringTerm)event.get(0); // nome do cliente
-			NumberTerm atendimento = (NumberTerm)event.get(1); // tempo de atendimento
-			
-			if (index != 0) {
-				/** Calculo do tempo de viagem
-				 * 	so realizado a partir do segundo evento, já que é retroativo **/
-	    		ListTerm last_event = (ListTerm)Sch.get(index-1);
-	    		NumberTerm last_atendimento = (NumberTerm)last_event.get(1);
-	    		
-	    		metrics[0] += atendimento.solve() - last_atendimento.solve() - parameters.SERVICE_TIME;
-			}
-			
-			if (!cliente_list.contains(cliente.toString())) {
-				/** Calculo do atraso dos passageiros
-				 *  so realizado no primeiro atendimento ao cliente (pick_up)
-				 *  ponderado por parameters.CONTROL_GAMMA entre o atual e os passados **/
-				NumberTerm desejado = (NumberTerm)event.get(2);
-				pick_up_list.add(atendimento.solve());
-				cliente_list.add(cliente.toString());
-				
-				if (cliente.toString().equals("\""+this.client_name+"\"")) {
-					metrics[1] += (1 - parameters.CONTROL_GAMMA)*(atendimento.solve() - desejado.solve());
-				} else {
-					metrics[1] += parameters.CONTROL_GAMMA*(atendimento.solve() - desejado.solve());
-				}
-			} else {
-				/** Calculo do tempo de viagem dos passageiros
-				 *  so realizado no segundo atendimento ao cliente (drop_off) **/
-				int cliente_index = cliente_list.indexOf(cliente.toString());
-				cliente_list.remove(cliente_index);
-				
-				metrics[2] += atendimento.solve() - pick_up_list.remove(cliente_index);				
-			}
-			
-			if (cliente_list.size() > parameters.VEHICLE_CAPACITY || atendimento.solve() > parameters.MAX_TIME) {
-				/** Se, a qualquer momento, o numero de clientes passar 
-				 *  da capacidade do veículo ou o instante de atendimento
-				 *  for maior do que a simulação, o custo é infinito **/
-				metrics[0] = Double.POSITIVE_INFINITY;
-				break;
-			}
-			
-		}
-		
-		if (this.travel_distance(later_event, final_event, ts) + later_atendimento.solve() > parameters.MAX_TIME ) {
-			metrics[0] = Double.POSITIVE_INFINITY;
-		} else {
-			metrics[0] += this.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event, ts);
-		} /** Se é possível terminar a rota antes de acabar a simulação, ok, se não infinito **/	
-		
-		return metrics;
-	}
-	
 	private double kappa_ij(ListTerm Sch, int i, int j, TransitionSystem ts) throws NoValueException {		
 		/** Calcula custo da inserção do pedido em i e j **/
 		
-    	double[] metrics_base = this.metrics(Sch, ts);
-    	double final_kappa = 0;
+    	double[] metrics_base = functions.metrics(Sch, this.client_name, ts);
     	
     	/** Os eventos no Sch são definidos por:
     	 *  	[cliente, atendimento, desejado, x, y]
@@ -162,42 +63,46 @@ public class schedule_cost extends DefaultInternalAction {
     		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
 
     		NumberTerm t0Term = (NumberTerm)last_event.get(1);
-    		double tempo_viagem = this.travel_distance(event, last_event, ts);
+    		double tempo_viagem = functions.travel_distance(event, last_event);
     		double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
     		event.set(1, ASSyntax.createNumber(Math.max(this.desired_time, instante_atendimento)));
     		
     		Sch_novo.set(index, event);
-    	}
+    	}    	
     	
     	/** As métricas de avaliação do agendamento são calculadas
     	 *  usando método interno e depois somadas, ponderando com
     	 *  os parâmetros de controle. Esse é o resultado final **/
     	
-    	double[] metrics = this.metrics(Sch_novo, ts);
+    	double[] metrics = functions.metrics(Sch_novo, this.client_name, ts);
     	
-    	// ts.getAg().getLogger().info("METRICAS_B "+metrics[0]+" "+metrics[1]+" "+metrics[2]);
-    	// ts.getAg().getLogger().info("METRICAS_A "+metrics_base[0]+" "+metrics_base[1]+" "+metrics_base[2]);
-    	
-    	final_kappa += parameters.CONTROL_C0*(metrics[0]-metrics_base[0]);
-    	final_kappa += parameters.CONTROL_C1*(metrics[1]-metrics_base[1]);
-    	final_kappa += (1 - parameters.CONTROL_C0 - parameters.CONTROL_C1)*(metrics[2]-metrics_base[2]);
+    	//ts.getAg().getLogger().info("metrics_1_distancia -> "+metrics[0]);
+    	//ts.getAg().getLogger().info("metrics_2_distancia -> "+metrics_base[0]);
+    	//ts.getAg().getLogger().info("--------------------------------------");
+    	//ts.getAg().getLogger().info("metrics_1_atraso -> "+metrics[1]);
+    	//ts.getAg().getLogger().info("metrics_2_atraso -> "+metrics_base[1]);
+    	//ts.getAg().getLogger().info("--------------------------------------");
+    	//ts.getAg().getLogger().info("metrics_1_tempo -> "+metrics[2]);
+    	//ts.getAg().getLogger().info("metrics_2_tempo -> "+metrics_base[2]);
+    	//ts.getAg().getLogger().info("--------------------------------------");
 		
-		return final_kappa;
+		return functions.metrics_insertion_cost(metrics, metrics_base);
 	}
 
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
         // execute the internal action
-    	//	 jia.schedule_cost(Sch, St, X, Y, KT, DT, Result)
+    	//	 jia.schedule_cost(Sch, St, X, Y, KT, DT, A, Result)
     	
-        ts.getAg().getLogger().info("executing internal action 'jia.schedule_cost'");
+        // ts.getAg().getLogger().info("executing internal action 'jia.schedule_cost'");
         if (!args[args.length-1].isVar()) {
         	throw new JasonException("Last argument of schedule_cost is not a variable");
         }
         
-        int i_pe = 0;                        // indice do primeiro evento
-        int n_e = 0;                         // total de eventos
         ListTerm Sch = (ListTerm)args[0];    // agendamento atual
+        
+        int i_pe = 0;                        // indice do primeiro evento
+        int n_e = Sch.size();                         // total de eventos
         
         StringTerm St = (StringTerm)args[1]; // tipo de serviço
         this.service_type = St.toString();
@@ -213,6 +118,8 @@ public class schedule_cost extends DefaultInternalAction {
         		
         NumberTerm Dt = (NumberTerm)args[5]; // instante desejado (no futuro)
         this.desired_time = Dt.solve();
+
+        Atom A = (Atom)args[6]; // nome do agente a ser atendido
         
     	for (Term t: Sch) {    // Todos os eventos da agenda
             ListTerm event = (ListTerm)t;    // Um evento específico
@@ -221,41 +128,93 @@ public class schedule_cost extends DefaultInternalAction {
             	/* se é passado OU anterior ao desejado,
             	   aumenta o index do primeiro evento    */
             	i_pe += 1;
+            } else {
+            	break;
             }
-            n_e += 1;
         }
-    	
-    	int n_estrela = n_e - i_pe; // número de espaços disponíveis
-    	if ( n_estrela == 0 ) { // caso só tenha como inserir no fim (é feio, eu sei)
-    		n_estrela = 1;
-    		i_pe = n_e -1;
-    	}
     	
     	double actValue = Double.POSITIVE_INFINITY;      // menor valor até agora
     	double minValue = actValue;        // valor atual
     	int min_i = Integer.MAX_VALUE;
     	int min_j = Integer.MAX_VALUE;
-    	for (int i = 0; i < n_estrela; i ++) {		// número de linhas
-    		for (int j = 0; j < n_estrela; j ++) {	// número de colunas
-    			if (j >= i){
-    				// calcula o custo da inserção na triangular superior
-    				actValue = this.kappa_ij(Sch, i+i_pe, j+i_pe, ts);
-    			}
-    			
-    			if (actValue < minValue) {
-    				// se o atual é menor do que o menor até agora, atualiza
-    				minValue = actValue;
-    				min_i = i+i_pe;
-    				min_j = j+i_pe;
-    				// System.out.println(i+" "+j);
-    			}
-    		}
+    	
+    	int n_estrela = n_e - i_pe; // número de espaços disponíveis
+    	if ( n_estrela == 0 ) { // caso só tenha como inserir no fim (é feio, eu sei)
+    		i_pe = n_e - 1;
+    		minValue = this.kappa_ij(Sch, i_pe, i_pe, ts);
+			min_i = i_pe;
+			min_j = i_pe;
+    	} else {    	
+	    	for (int i = 0; i < n_estrela; i ++) {		// número de linhas Kappa
+	    		for (int j = 0; j < n_estrela; j ++) {	// número de colunas Kappa
+	    			if (j >= i){
+	    				// calcula o custo da inserção na triangular superior
+	    				actValue = this.kappa_ij(Sch, i+i_pe, j+i_pe, ts);
+	    			} else {
+	    				continue;
+	    			}
+	    			
+	    			if (actValue < minValue) {
+	    				// se o atual é menor do que o menor até agora, atualiza
+	    				minValue = actValue;
+	    				min_i = i+i_pe;
+	    				min_j = j+i_pe;
+	    			}
+	    		}
+	    	}
     	}
     	
     	ListTerm result = ASSyntax.createList();
     	result.add(ASSyntax.createNumber(Math.round(minValue)));
-    	result.add(ASSyntax.createNumber(min_i));
-    	result.add(ASSyntax.createNumber(min_j));
+
+        /** Os eventos no Sch são definidos por:
+         *      [cliente, atendimento, desejado, x, y]
+         *  Abaixo, dois eventos (buscar e levar) são criados
+         *  de acordo com o cliente. **/
+        
+        ListTerm new_event_i = ASSyntax.createList(ASSyntax.createString(A.toString()),
+                                                   ASSyntax.createNumber(0),
+                                                   ASSyntax.createNumber(Dt.solve()));
+        
+        ListTerm new_event_j = ASSyntax.createList(ASSyntax.createString(A.toString()),
+                                                   ASSyntax.createNumber(0),
+                                                   ASSyntax.createNumber(Dt.solve()));
+        
+        if ( St.toString().equals("\"drop\"") ) {
+            new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
+            new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
+            
+            new_event_j.add(ASSyntax.createNumber(this.service_position_x));
+            new_event_j.add(ASSyntax.createNumber(this.service_position_y));          
+        } else {
+            new_event_j.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
+            new_event_j.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
+            
+            new_event_i.add(ASSyntax.createNumber(this.service_position_x));
+            new_event_i.add(ASSyntax.createNumber(this.service_position_y));          
+        }
+        
+        /** Os testes são realizados sobre um clone do agendamento
+         *  Após a insersão em i e j, todos os eventos após i são
+         *  atualizados, modificando seu tempo de atendimento de
+         *  acordo com as distancias **/
+        
+        ListTerm Sch_novo = Sch.cloneLT();
+        Sch_novo.add(min_j+1, new_event_j);
+        Sch_novo.add(min_i+1, new_event_i);
+        for ( int index = min_i+1; index < Sch_novo.size(); index++ ) {
+            ListTerm event = (ListTerm)Sch_novo.get(index);
+            ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
+
+            NumberTerm t0Term = (NumberTerm)last_event.get(1);
+            double tempo_viagem = functions.travel_distance(event, last_event);
+            double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
+            event.set(1, ASSyntax.createNumber(Math.max(Dt.solve(), instante_atendimento)));
+            
+            Sch_novo.set(index, event);
+        }
+        
+        result.add(ASSyntax.createList(Sch_novo));
     	
         // unifica o resultado com a variável passada
     	return un.unifies(args[args.length-1], result);
