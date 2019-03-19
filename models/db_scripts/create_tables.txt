@@ -2,11 +2,11 @@ CREATE TABLE global_results(
 	n_req INTEGER NOT NULL,
 	n_veh INTEGER NOT NULL,
 	n_ins INTEGER NOT NULL,
-	opt INTEGER NOT NULL,
+	processo TEXT NOT NULL,
 	w_time_mean REAL, w_time_std REAL,
 	t_time_mean REAL, t_time_std REAL,
 	runtime REAL, obj REAL,
-	PRIMARY KEY(n_req, n_veh, n_ins, opt)
+	PRIMARY KEY(n_req, n_veh, n_ins, processo)
 )
 
 CREATE TABLE specific_results(
@@ -14,11 +14,11 @@ CREATE TABLE specific_results(
 	n_veh INTEGER NOT NULL,
 	n_ins INTEGER NOT NULL,
 	id_req INTEGER NOT NULL,
-	opt INTEGER NOT NULL,
+	processo TEXT NOT NULL,
 	desired_time REAL,
 	ini_time REAL,
 	fim_time REAL,
-	PRIMARY KEY(n_req, n_veh, n_ins, id_req, opt)
+	PRIMARY KEY(n_req, n_veh, n_ins, id_req, processo)
 )
 
 CREATE TABLE instances(

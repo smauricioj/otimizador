@@ -153,6 +153,7 @@ class Resultado:
 			i, k = [int(x) for x in tup.split(',')]
 			self.tempos[k].append((i,float(value)))
 		elif var == 'x' and aprox(float(value), 1.0, 0.0001):
+			print tup
 			i, j, k = [int(x) for x in tup.split(',')]
 			if i == 0 and j == (2 * self.ins.n) + 1:
 				pass
@@ -426,14 +427,17 @@ class Resultado:
 					  WHERE n_req = {} and
 					        n_veh = {} and
 					        n_ins = {} and
-					        opt = {}  '''.format(*data))
+					        processo = "{}"  '''.format(*data))
 		c.execute(''' DELETE FROM specific_results
 					  WHERE n_req = {} and
 					        n_veh = {} and
 					        n_ins = {} and
-					        opt = {}  '''.format(*data))
+					        processo = "{}"  '''.format(*data))
 		conn.commit()
 		conn.close()
+
+	def print_routes(self):
+		print self.rotas
 
 
 

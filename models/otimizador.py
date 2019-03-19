@@ -18,18 +18,13 @@ class Otimizador:
 		self.C1 = 0.33
 		self.C2 = 0.33
 
-		self.optimal_method = 2
+		self.optimal_method = "Otimizado"
 		self.res = resultado.Resultado(self.ins, self.optimal_method)
 
-		self.save_data_DB = True
+		self.save_data_DB = False
 
 		self.save_lp = False
-		if self.optimal_method == 1:
-			self.output_lp_name = 'out_lifted.lp'
-		elif self.optimal_method == 2:
-			self.output_lp_name = 'out_base.lp'
-		else:
-			self.output_lp_name = None
+		self.output_lp_name = 'out.lp'
 
 	def begin(self):
 		M = GRB.INFINITY
@@ -54,13 +49,13 @@ class Otimizador:
 		u = mod.addVars(carga,     lb=0.0, vtype=GRB.INTEGER,    name="u")
 
 		exp = 0
-		exp += self.C0*quicksum(x[ijk] * tau[ij]
+		exp += self.C0*quicksum( x[ijk] * tau[ij]
 		                    for ijk in viagens for ij in arcos
 		                    if ijk[0] == ij[0] and ijk[1] == ij[1])
-		exp += self.C1*quicksum((t[ik] - T[i])
+		exp += self.C1*quicksum( (t[ik] - T[i])
 		                    for i in origens for ik in instantes
 		                    if ik[0] == i)
-		exp += self.C2*quicksum(t[(i+n,k)] - t[(i,k)]
+		exp += self.C2*quicksum( (t[(i+n,k)] - t[(i,k)])
 		                    for i in origens for k in veiculos)
 
 		mod.setObjective(exp, GRB.MINIMIZE)

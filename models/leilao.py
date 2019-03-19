@@ -19,7 +19,8 @@ class Leilao:
 	def __init__(self, ins_id):
 		self.actual_path = path.dirname(path.abspath("__file__"))
 		self.rtime = None
-		self.optimal_method = 0
+		self.optimal_method = "Leilao"
+		self.end_time_active = 'true'
 		if ins_id != 'static':
 			self.static = False
 			self.ins = Instancia('{}.json'.format(ins_id))
@@ -56,9 +57,10 @@ class Leilao:
 			jcm_text += '''
 		agent end_time: end_time.asl {{
 			beliefs: end_time({}),
-					 queue_number({})
+					 queue_number({}),
+					 active({})
 			focus: tools.queue
-		}}\n\n\t'''.format(2000,len(req)+1)
+		}}\n\n\t'''.format(2000,len(req)+1,self.end_time_active)
 			jcm_text += 'workspace tools { artifact queue: tools.Queue() \n}\n\n\t'
 			jcm_text += 'asl-path: auction/src/agt,src/agt\n\n'
 			jcm_text += '}'
@@ -70,32 +72,33 @@ class Leilao:
 		args = 'java '
 		args += '-classpath %JACAMO_HOME%/libs/*;auction/bin/classes jacamo.infra.RunJaCaMoProject '
 		args += '{}/auction/auction.jcm'.format(self.actual_path)
-		t0 = clock()
 		check_call(args.split(' '), shell = True)
-		self.rtime = clock() - t0
 
 	def result(self):
-		try:			
-			df = pd.read_csv(path.join(self.actual_path, 'auction\\tmp\\data.csv'), sep = ';', header = None)
-		except pd.errors.EmptyDataError:
-			print "Instancia infactivel"
-			self.res.reset_data_DB()
-		else:
-			w_times = np.array([])
-			t_times = np.array([])
-			for _, serie in df.iterrows():
-			    k = serie[0].split('_')[-1]
-			    client_list = list()
-			    for event in literal_eval(serie[1]):
-			        client = int(event[0].split('_')[-1])
-			        if client != 0:
-			            if client not in client_list:
-			                client_list.append(client)
-			                ini_time = event[1]
-			                desired_time = event[2]
-			            else:
-			                end_time = event[1]
-			                self.res.result_data_DB_leilao_specific(client, desired_time, ini_time, end_time)
-			                w_times = np.append(w_times, ini_time - desired_time)
-			                t_times = np.append(t_times, end_time - ini_time)
-			self.res.result_data_DB_leilao_global(self.rtime, 0, w_times.mean(), w_times.std(), t_times.mean(), t_times.std())
+		if not self.static:
+			try:			
+				df = pd.read_csv(path.join(self.actual_path, 'auction\\tmp\\data.csv'), sep = ';', header = None)
+			except pd.errors.EmptyDataError:
+				print "Instancia infactivel"
+				self.res.reset_data_DB()
+			else:
+				w_times = np.array([])
+				t_times = np.array([])
+				for _, serie in df.iterrows():
+					if serie[0] == 'end_time':
+						self.rtime = float(serie[1])
+					else:
+					    client_list = list()
+					    for event in literal_eval(serie[1]):
+					        client = int(event[0].split('_')[-1])
+					        if client != 0:
+					            if client not in client_list:
+					                client_list.append(client)
+					                ini_time = event[1]
+					                desired_time = event[2]
+					            else:
+					                end_time = event[1]
+					                self.res.result_data_DB_leilao_specific(client, desired_time, ini_time, end_time)
+					                w_times = np.append(w_times, ini_time - desired_time)
+					                t_times = np.append(t_times, end_time - ini_time)
+				self.res.result_data_DB_leilao_global(self.rtime, 0, w_times.mean(), w_times.std(), t_times.mean(), t_times.std())
