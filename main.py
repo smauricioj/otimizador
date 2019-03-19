@@ -148,7 +148,7 @@ if __name__ == "__main__":
         ins = Instancia('05_02_007.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
-            if k[0] == 10:
+            if k[0] == 5:
                 print "Key: ",k," and Value: ",v
 
     if tabelar:                
@@ -163,10 +163,16 @@ if __name__ == "__main__":
         #         print v
         # exit()
 
-        # db_man.execute('DELETE FROM global_results WHERE runtime > 1201 ')
+        # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
+        # db_man.execute('DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" ')
 
-        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 5 and n_veh = 2 and n_ins = 7 ORDER BY opt"):
-            print row
+        # for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 5 and n_veh = 2"):
+        #     print row
+
+        # print '-'*30
+
+        # for row in db_man.execute("SELECT AVG(fim_time-ini_time), opt, n_ins FROM specific_results WHERE n_req = 5 and n_veh = 4 GROUP BY n_ins, opt ORDER BY opt, n_ins"):
+        #     print row
 
         # for filename in listdir(instancia_path):
         #     print filename

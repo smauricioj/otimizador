@@ -184,6 +184,11 @@ class Otimizador:
 					self.res.reset_data_DB()
 			except AttributeError:
 				self.res.reset_data_DB()
+		else:
+			for v in mod.getVars():
+				self.res.add_trip('{}={}'.format(v.varName, v.x))
+			self.res.print_routes()
+
 
 		if self.save_lp:
 			mod.write('temp.lp')
