@@ -11,8 +11,10 @@ schedule([["client_000",0,0,0,0]]).
 
 /* Initial goals */
 
+!start.
 /* Plans */
 
++!start : true <- .df_register("driver").
 +auction(St, X, Y, KT, DT)[source(A)] : true
 	<-  ?schedule(Sch);
 		jia.schedule_cost(Sch, St, X, Y, KT, DT, Result);

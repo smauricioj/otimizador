@@ -22,7 +22,7 @@ public class Queue extends Artifact {
 	
 	@INTERNAL_OPERATION
 	void initial_inc() {
-		await_time(2000);
+		await_time(50);
 		inc();
 	}
 }

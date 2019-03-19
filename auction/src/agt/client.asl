@@ -6,14 +6,14 @@
 
 /* Plans */
 	   	
-+next(N) : queue_number(N)
++next(N) : queue_number(N) & .df_search("driver",DL)
 	<- 	.print("Iniciando");
 	   	?service_point_x(X);
 	   	?service_point_y(Y);
 	   	?known_time(KT);
 	   	?desired_time(DT);
 	   	?service_type(ST)
-	   	.broadcast(tell, auction(ST, X, Y, KT, DT));
+	   	.send(DL,tell, auction(ST, X, Y, KT, DT));
 	   	.at("now + 1 s", {+!decide}) .
 	   
 +!decide : .findall(b(V,A), bid(V)[source(A)], L) & .length(L, N) & N >= 1
