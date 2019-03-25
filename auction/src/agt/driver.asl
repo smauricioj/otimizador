@@ -7,27 +7,28 @@
  *            d = instante desejado de atendimento
  * 			  x, y = posicao cartesiana de atendimento */
 
-schedule([["client_000",0,0,0,0]]).
 last_known_time(0).
 
 /* Initial goals */
 
 !start.
-!vns.
 
 /* Plans */
 
 +!start : true <- .df_register("driver").
 
-+!vns : true
++!vns_free : true
 	<-	?schedule(Sch);
 		?last_known_time(KT);
-		// jia.schedule_vns(Sch, KT, NewSch);
-		// !!vns;
+		jia.schedule_vns(Sch, KT, NewSch);
+		-+schedule(NewSch);
+		.at("now + 1 s", {+!vns_free});
+		.
+
++!vns_block : true
+	<-	.print("VNS bloqueado");
 		.
 		
-// +!vns <- !!vns.
-
 +auction(St, X, Y, KT, DT)[source(A)] : true
 	<-  ?schedule(Sch);
 		jia.schedule_cost(Sch, St, X, Y, KT, DT, A, Result)
@@ -44,6 +45,7 @@ last_known_time(0).
 		.nth(1,Result,New_Sch);
 		.print(New_Sch);
 		-+schedule(New_Sch);
+		inc;
 		.
 		
 +end : .my_name(N)

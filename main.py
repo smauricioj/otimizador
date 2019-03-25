@@ -106,14 +106,15 @@ if __name__ == "__main__":
             from models.otimizador import Otimizador
             text = u"# Iniciando processo de otimizar instâncias."
             input_text = 'Qual instancia(s) otimizar? > '
-            def method(ins_id):
+            def method(ins_id, *args):
                 Otimizador(ins_id).begin()
         else:
             from models.leilao import Leilao
             text = u"# Iniciando processo de leiloar instâncias."
             input_text = 'Qual instancia(s) realizar leilao? > '
-            def method(ins_id):
-                l = Leilao(ins_id)
+            input_text_2 = 'Liberar VNS para agentes? > '
+            def method(ins_id, *args):
+                l = Leilao(ins_id, args[0])
                 l.begin()
                 l.result()
 
@@ -123,25 +124,25 @@ if __name__ == "__main__":
         stop = False
         while not stop:
             r = raw_input(input_text)
-            if r == 'S':
+            vns_free = False
+
+            if r.lower() == 's':
                 stop = True
-            elif r.split('/')[0] == 'all':
+
+            if leiloar and not stop:
+                r2 = raw_input(input_text_2)
+                if r2.lower() == 'y':
+                    vns_free = True
+
+            if r == 'all':
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
                     if int(ins_id.split('_')[0]) == 0:
                         continue
-                    try:
-                        post_case = r.split('/')[1]
-                    except IndexError:
-                        post_case = ''
-                    if post_case == 'new':
-                        if ins_id not in listdir(resultados_path):
-                            method(ins_id)
-                    else:
-                        method(ins_id)
-            else:
-                method(r)
+                    method(ins_id, vns_free)
+            elif not stop:
+                method(r, vns_free)
 
     if resultar:
         # Resultado(Instancia('00_00_000.json')).plot_global_result_data()

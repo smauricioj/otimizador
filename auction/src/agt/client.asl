@@ -23,8 +23,7 @@
 			.send("end_time",tell,infeasible)
 		} else {
     		.print("Winner is ", W, " with ", V);
-    		.broadcast(tell, winner(W));
-    		inc;			
+    		.broadcast(tell, winner(W));		
 		}.
 		
 +!decide <-	.wait(30); !!decide.

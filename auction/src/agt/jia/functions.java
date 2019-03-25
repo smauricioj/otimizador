@@ -11,12 +11,17 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.StringTerm;
 
 public class functions{
-	public static double travel_distance(ListTerm event, ListTerm last_event) throws NoValueException {
-		
-		NumberTerm x0Term = (NumberTerm)last_event.get(3);
-		NumberTerm y0Term = (NumberTerm)last_event.get(4);
-		NumberTerm x1Term = (NumberTerm)event.get(3);
-		NumberTerm y1Term = (NumberTerm)event.get(4);
+	public static double travel_distance(ListTerm event_1, ListTerm event_2) throws NoValueException {
+		/** Calculo da distï¿½ncia entre dois eventos do agendamento
+		 * 
+		 *      Recebe:  ListTerm event_n -> Eventos que ocorrem, em ordem
+		 *      
+		 *      Retorna: double           -> Valor da distï¿½ncia entre os eventos**/
+				
+		NumberTerm x0Term = (NumberTerm)event_2.get(3);
+		NumberTerm y0Term = (NumberTerm)event_2.get(4);
+		NumberTerm x1Term = (NumberTerm)event_1.get(3);
+		NumberTerm y1Term = (NumberTerm)event_1.get(4);
 		double x0 = x0Term.solve();
 		double y0 = y0Term.solve();
 		double x1 = x1Term.solve();
@@ -26,11 +31,15 @@ public class functions{
 	}
 	
 	public static double[] metrics(ListTerm Sch, String client_name, TransitionSystem ts) throws NoValueException {
-		/** Cálculo das métricas de avaliação do agendamento
-		 * 		Recebe:  ListTerm Sch -> agendamento a ser avaliado
-		 * 		Retorna: double[3]    -> métricas de avaliação
+		/** Cï¿½lculo das mï¿½tricas de avaliaï¿½ï¿½o do agendamento
 		 * 
-		 *  O vetor contém as métricas de: distância percorrida;
+		 * 		Recebe:  ListTerm Sch        -> agendamento a ser avaliado
+		 * 				 String client_name  -> Nome do cliente atualmente sendo inserido
+		 * 				 TransitionSystem ts -> Mï¿½todo pra prints do jason
+		 * 
+		 * 		Retorna: double[3]    -> mï¿½tricas de avaliaï¿½ï¿½o
+		 * 
+		 *  O vetor contï¿½m as mï¿½tricas de: distï¿½ncia percorrida;
 		 *  atraso de atendimento; e tempo de viagem.**/
 		
 		double[] metrics = new double[3]; // retorno final
@@ -43,40 +52,68 @@ public class functions{
 		}
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
 		final_event.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
-			// final_event é criado para garantir que o veículo volta pro depósito no fim da operação
-			// (ou que pelo menos isso é considerado na hora de calcular as métricas haha)
+			// final_event ï¿½ criado para garantir que o veï¿½culo volta pro depï¿½sito no fim da operaï¿½ï¿½o
+			// (ou que pelo menos isso ï¿½ considerado na hora de calcular as mï¿½tricas haha)
 		
 		ListTerm later_event = (ListTerm)Sch.get(Sch.size()-1);
 		NumberTerm later_atendimento = (NumberTerm)later_event.get(1);
-			// later_event usado pra calcular se a rota respeita o limite de tempo máximo da simulação
+			// later_event usado pra calcular se a rota respeita o limite de tempo mï¿½ximo da simulaï¿½ï¿½o
+		
+		// ts.getAg().getLogger().info("METRICS Sch ->"+Sch);
 		
 		for (int index = 0; index < Sch.size(); index++) {
     		ListTerm event = (ListTerm)Sch.get(index); // evento sendo atualmente avaliado
 			StringTerm cliente = (StringTerm)event.get(0); // nome do cliente
 			NumberTerm atendimento = (NumberTerm)event.get(1); // tempo de atendimento
+			NumberTerm desejado = (NumberTerm)event.get(2); // instante desejado
+			NumberTerm pos_x = (NumberTerm)event.get(3); // posicao x do antendimento
+			NumberTerm pos_y = (NumberTerm)event.get(4); // posicao y do atendimento
+			StringTerm tipo = (StringTerm)event.get(5);
+			double weight = 1; // peso entre pedidos passados e atual no atraso
 			
 			if (index != 0) {
 				/** Calculo do tempo de viagem
-				 * 	so realizado a partir do segundo evento, já que é retroativo **/	    		
+				 * 	so realizado a partir do segundo evento, jï¿½ que ï¿½ retroativo **/	    		
 	    		metrics[0] += functions.travel_distance(event, (ListTerm)Sch.get(index-1));
 			}
 			
 			if (!cliente_list.contains(cliente.toString())) {
 				/** Calculo do atraso dos passageiros
-				 *  so realizado no primeiro atendimento ao cliente (pick_up)
-				 *  ponderado por parameters.CONTROL_GAMMA entre o atual e os passados **/
-				NumberTerm desejado = (NumberTerm)event.get(2);
+				 *  so realizado no primeiro atendimento ao cliente (embarque)
+				 *  ponderado por parameters.CONTROL_GAMMA entre o atual e os passados
+				 *  Se o pedido ï¿½ de drop e comeï¿½a fora do depï¿½sito, o custo ï¿½ infinito
+				 *  Se o pedido ï¿½ de pick e comeï¿½a no depï¿½sito, o custo ï¿½ infinito
+				 *  Se o pedido for antedido antes do desejado, o custo ï¿½ infinito **/
+				
 				pick_up_list.add(atendimento.solve());
 				cliente_list.add(cliente.toString());
 				
+				if (tipo.toString().equals("\"drop\"")) {					
+					if ( ( Math.round(pos_x.solve()) != parameters.VEHICLE_INITIAL_POSITION_X ) || ( Math.round(pos_y.solve()) != parameters.VEHICLE_INITIAL_POSITION_Y ) ) {
+						metrics[1] = Double.POSITIVE_INFINITY;
+					}			
+				}
+				
+				if (tipo.toString().equals("\"pick\"")) {
+					if ( ( Math.round(pos_x.solve()) == parameters.VEHICLE_INITIAL_POSITION_X ) & ( Math.round(pos_y.solve()) == parameters.VEHICLE_INITIAL_POSITION_Y ) ) {
+						metrics[1] = Double.POSITIVE_INFINITY;
+					}					
+				}
+				
 				if (cliente.toString().equals("\""+client_name+"\"")) {
-					metrics[1] += (1 - parameters.CONTROL_GAMMA)*(atendimento.solve() - desejado.solve());
+					weight = (1 - parameters.CONTROL_GAMMA);
 				} else {
-					metrics[1] += parameters.CONTROL_GAMMA*(atendimento.solve() - desejado.solve());
+					weight = parameters.CONTROL_GAMMA;
+				}
+				
+				if (atendimento.solve() - desejado.solve() < 0) {
+					metrics[1] = Double.POSITIVE_INFINITY;
+				} else {
+					metrics[1] += weight*(atendimento.solve() - desejado.solve());				
 				}
 			} else {
 				/** Calculo do tempo de viagem dos passageiros
-				 *  so realizado no segundo atendimento ao cliente (drop_off) **/
+				 *  so realizado no segundo atendimento ao cliente (desembarque) **/
 				int cliente_index = cliente_list.indexOf(cliente.toString());
 				cliente_list.remove(cliente_index);
 				
@@ -85,8 +122,8 @@ public class functions{
 			
 			if (cliente_list.size() > parameters.VEHICLE_CAPACITY || atendimento.solve() > parameters.MAX_TIME) {
 				/** Se, a qualquer momento, o numero de clientes passar 
-				 *  da capacidade do veículo ou o instante de atendimento
-				 *  for maior do que a simulação, o custo é infinito **/
+				 *  da capacidade do veï¿½culo ou o instante de atendimento
+				 *  for maior do que a simulaï¿½ï¿½o, o custo ï¿½ infinito **/
 				metrics[0] = Double.POSITIVE_INFINITY;
 				break;
 			}
@@ -97,12 +134,15 @@ public class functions{
 			metrics[0] = Double.POSITIVE_INFINITY;
 		} else {
 			metrics[0] += functions.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event);
-		} /** Se é possível terminar a rota antes de acabar a simulação, ok, se não infinito **/	
+		} /** Se ï¿½ possï¿½vel terminar a rota antes de acabar a simulaï¿½ï¿½o, ok, se nï¿½o infinito **/
+		
+		// ts.getAg().getLogger().info("METRICS total ->"+metrics[0]+" "+metrics[1]+" "+metrics[2]);
 		
 		return metrics;
 	}
 	
-	public static double metrics_insertion_cost(double[] metrics_new, double[] metrics_base) {
+	public static double metrics_diff_cost(double[] metrics_new, double[] metrics_base) {
+		/** Calcula a diferenï¿½a entre duas mï¿½tricas  **/
 		
 		double final_cost = 0;
 		
@@ -111,6 +151,24 @@ public class functions{
 		final_cost += (1 - parameters.CONTROL_C0 - parameters.CONTROL_C1)*(metrics_new[2]-metrics_base[2]);
 		
 		return final_cost;		
+	}
+	
+	public static ListTerm Sch_time_fit(ListTerm Sch, int index_offset) throws NoValueException {
+        for ( int index = index_offset; index < Sch.size(); index++ ) {
+        	if (index != 0) {
+                ListTerm event = (ListTerm)Sch.get(index);
+                ListTerm last_event = (ListTerm)Sch.get(index-1);
+                NumberTerm last_event_initial_time = (NumberTerm)last_event.get(1);
+                NumberTerm event_desired_time = (NumberTerm)event.get(2);
+                double travel_time = functions.travel_distance(event, last_event);
+                double event_initial_time = last_event_initial_time.solve() + parameters.SERVICE_TIME + travel_time;
+                event_initial_time = Math.round(event_initial_time * 100.0) / 100.0;
+                event.set(1, ASSyntax.createNumber(Math.max(event_desired_time.solve(), event_initial_time)));
+                
+                Sch.set(index, event);        		
+        	}
+        }
+        return Sch;
 	}
 }
 

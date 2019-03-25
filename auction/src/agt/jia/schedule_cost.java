@@ -18,13 +18,9 @@ public class schedule_cost extends DefaultInternalAction {
 	private double desired_time = 0;
 	private double known_time = 0;
 	
-	private double kappa_ij(ListTerm Sch, int i, int j, TransitionSystem ts) throws NoValueException {		
-		/** Calcula custo da inserção do pedido em i e j **/
-		
-    	double[] metrics_base = functions.metrics(Sch, this.client_name, ts);
-    	
-    	/** Os eventos no Sch são definidos por:
-    	 *  	[cliente, atendimento, desejado, x, y]
+	private ListTerm Sch_after_insertion(ListTerm Sch, int i, int j) throws NoValueException {
+		/** Os eventos no Sch são definidos por:
+    	 *  	[cliente, atendimento, desejado, x, y, tipo]
     	 *  Abaixo, dois eventos (buscar e levar) são criados
     	 *  de acordo com o cliente. **/
     	
@@ -48,45 +44,38 @@ public class schedule_cost extends DefaultInternalAction {
     		
     		new_event_i.add(ASSyntax.createNumber(this.service_position_x));
     		new_event_i.add(ASSyntax.createNumber(this.service_position_y));    		
-    	}
+    	} 
+        
+        new_event_i.add(ASSyntax.createString(this.service_type.substring(1, this.service_type.length()-1)));
+        new_event_j.add(ASSyntax.createString(this.service_type.substring(1, this.service_type.length()-1)));
     	
     	/** Os testes são realizados sobre um clone do agendamento
     	 *  Após a insersão em i e j, todos os eventos após i são
     	 *  atualizados, modificando seu tempo de atendimento de
     	 *  acordo com as distancias **/
+        
+    	Sch.add(j+1, new_event_j);
+    	Sch.add(i+1, new_event_i);
     	
-    	ListTerm Sch_novo = Sch.cloneLT();
-    	Sch_novo.add(j+1, new_event_j);
-    	Sch_novo.add(i+1, new_event_i);
-    	for ( int index = i+1; index < Sch_novo.size(); index++ ) {
-    		ListTerm event = (ListTerm)Sch_novo.get(index);
-    		ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
-
-    		NumberTerm t0Term = (NumberTerm)last_event.get(1);
-    		double tempo_viagem = functions.travel_distance(event, last_event);
-    		double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
-    		event.set(1, ASSyntax.createNumber(Math.max(this.desired_time, instante_atendimento)));
-    		
-    		Sch_novo.set(index, event);
-    	}    	
+    	return functions.Sch_time_fit(Sch, i+1);
+	}
+	
+	private double kappa_ij(ListTerm Sch, int i, int j, TransitionSystem ts) throws NoValueException {		
+		/** Calcula custo da inserção do pedido em i e j **/
+		
+		ListTerm Internal_Sch = Sch.cloneLT();
+    	
+    	ListTerm Sch_insert = this.Sch_after_insertion(Internal_Sch, i, j);	
     	
     	/** As métricas de avaliação do agendamento são calculadas
-    	 *  usando método interno e depois somadas, ponderando com
+    	 *  usando método e depois subtraídas, ponderando com
     	 *  os parâmetros de controle. Esse é o resultado final **/
     	
-    	double[] metrics = functions.metrics(Sch_novo, this.client_name, ts);
+    	double[] metrics_base = functions.metrics(Sch, this.client_name, ts);
     	
-    	//ts.getAg().getLogger().info("metrics_1_distancia -> "+metrics[0]);
-    	//ts.getAg().getLogger().info("metrics_2_distancia -> "+metrics_base[0]);
-    	//ts.getAg().getLogger().info("--------------------------------------");
-    	//ts.getAg().getLogger().info("metrics_1_atraso -> "+metrics[1]);
-    	//ts.getAg().getLogger().info("metrics_2_atraso -> "+metrics_base[1]);
-    	//ts.getAg().getLogger().info("--------------------------------------");
-    	//ts.getAg().getLogger().info("metrics_1_tempo -> "+metrics[2]);
-    	//ts.getAg().getLogger().info("metrics_2_tempo -> "+metrics_base[2]);
-    	//ts.getAg().getLogger().info("--------------------------------------");
+    	double[] metrics = functions.metrics(Sch_insert, this.client_name, ts);
 		
-		return functions.metrics_insertion_cost(metrics, metrics_base);
+		return functions.metrics_diff_cost(metrics, metrics_base);
 	}
 
     @Override
@@ -120,6 +109,7 @@ public class schedule_cost extends DefaultInternalAction {
         this.desired_time = Dt.solve();
 
         Atom A = (Atom)args[6]; // nome do agente a ser atendido
+        this.client_name = A.toString();
         
     	for (Term t: Sch) {    // Todos os eventos da agenda
             ListTerm event = (ListTerm)t;    // Um evento específico
@@ -135,8 +125,8 @@ public class schedule_cost extends DefaultInternalAction {
     	
     	double actValue = Double.POSITIVE_INFINITY;      // menor valor até agora
     	double minValue = actValue;        // valor atual
-    	int min_i = Integer.MAX_VALUE;
-    	int min_j = Integer.MAX_VALUE;
+    	int min_i = 0;
+    	int min_j = 0;
     	
     	int n_estrela = n_e - i_pe; // número de espaços disponíveis
     	if ( n_estrela == 0 ) { // caso só tenha como inserir no fim (é feio, eu sei)
@@ -163,58 +153,12 @@ public class schedule_cost extends DefaultInternalAction {
 	    		}
 	    	}
     	}
+
+        Sch = this.Sch_after_insertion(Sch, min_i, min_j);
     	
     	ListTerm result = ASSyntax.createList();
-    	result.add(ASSyntax.createNumber(Math.round(minValue)));
-
-        /** Os eventos no Sch são definidos por:
-         *      [cliente, atendimento, desejado, x, y]
-         *  Abaixo, dois eventos (buscar e levar) são criados
-         *  de acordo com o cliente. **/
-        
-        ListTerm new_event_i = ASSyntax.createList(ASSyntax.createString(A.toString()),
-                                                   ASSyntax.createNumber(0),
-                                                   ASSyntax.createNumber(Dt.solve()));
-        
-        ListTerm new_event_j = ASSyntax.createList(ASSyntax.createString(A.toString()),
-                                                   ASSyntax.createNumber(0),
-                                                   ASSyntax.createNumber(Dt.solve()));
-        
-        if ( St.toString().equals("\"drop\"") ) {
-            new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
-            new_event_i.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
-            
-            new_event_j.add(ASSyntax.createNumber(this.service_position_x));
-            new_event_j.add(ASSyntax.createNumber(this.service_position_y));          
-        } else {
-            new_event_j.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_X));
-            new_event_j.add(ASSyntax.createNumber(parameters.VEHICLE_INITIAL_POSITION_Y));
-            
-            new_event_i.add(ASSyntax.createNumber(this.service_position_x));
-            new_event_i.add(ASSyntax.createNumber(this.service_position_y));          
-        }
-        
-        /** Os testes são realizados sobre um clone do agendamento
-         *  Após a insersão em i e j, todos os eventos após i são
-         *  atualizados, modificando seu tempo de atendimento de
-         *  acordo com as distancias **/
-        
-        ListTerm Sch_novo = Sch.cloneLT();
-        Sch_novo.add(min_j+1, new_event_j);
-        Sch_novo.add(min_i+1, new_event_i);
-        for ( int index = min_i+1; index < Sch_novo.size(); index++ ) {
-            ListTerm event = (ListTerm)Sch_novo.get(index);
-            ListTerm last_event = (ListTerm)Sch_novo.get(index-1);
-
-            NumberTerm t0Term = (NumberTerm)last_event.get(1);
-            double tempo_viagem = functions.travel_distance(event, last_event);
-            double instante_atendimento = t0Term.solve() + parameters.SERVICE_TIME + tempo_viagem;
-            event.set(1, ASSyntax.createNumber(Math.max(Dt.solve(), instante_atendimento)));
-            
-            Sch_novo.set(index, event);
-        }
-        
-        result.add(ASSyntax.createList(Sch_novo));
+    	result.add(ASSyntax.createNumber(Math.round(minValue*10.0)/10.0));        
+        result.add(ASSyntax.createList(Sch));
     	
         // unifica o resultado com a variável passada
     	return un.unifies(args[args.length-1], result);

@@ -16,10 +16,13 @@ from ast import literal_eval
 
 class Leilao:
 
-	def __init__(self, ins_id):
+	def __init__(self, ins_id, vns_free):
 		self.actual_path = path.dirname(path.abspath("__file__"))
 		self.rtime = None
 		self.optimal_method = "Leilao"
+		self.vns_free = vns_free
+		if self.vns_free:
+			self.optimal_method += " VNS"
 		self.end_time_active = 'true'
 		if ins_id != 'static':
 			self.static = False
@@ -39,7 +42,21 @@ class Leilao:
 
 			jcm_text = ''''''
 			jcm_text += 'mas auction { \n\n\t'
-			jcm_text += 'agent driver_: driver.asl {{ instances: {}\n}} \n\t'.format(static_data['number_of_vehicles'])
+			agent_data = dict()
+			agent_data['instances'] = static_data['number_of_vehicles']
+			agent_data['x'] = self.ins.deposito_x
+			agent_data['y'] = self.ins.deposito_y
+			if self.vns_free:
+				agent_data['vns_free'] = 'vns_free'
+			else:
+				agent_data['vns_free'] = 'vns_block'
+			jcm_text += '''
+			agent driver_: driver.asl {{
+				instances: {instances}
+				beliefs: schedule([["client_000",0,0,{x},{y},"drop"]])
+				goals: {vns_free}
+				focus: tools.queue
+				\n}} \n\t'''.format(**agent_data)
 			for i, req_data in enumerate(req):
 				req_data['queue_number'] = str(i+1)
 				req_data['counter'] = str(i+1).zfill(3)
