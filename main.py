@@ -126,22 +126,21 @@ if __name__ == "__main__":
             r = raw_input(input_text)
             vns_free = False
 
-            if r.lower() == 's':
-                stop = True
-
-            if leiloar and not stop:
+            if leiloar and r.lower() not in ['s','static']:
                 r2 = raw_input(input_text_2)
                 if r2.lower() == 'y':
                     vns_free = True
 
-            if r == 'all':
+            if r.lower() == 's':
+                stop = True
+            elif r == 'all':
                 for filename in listdir(instancia_path):
                     print filename
                     ins_id = filename.split('.')[0]
                     if int(ins_id.split('_')[0]) == 0:
                         continue
                     method(ins_id, vns_free)
-            elif not stop:
+            else:
                 method(r, vns_free)
 
     if resultar:
@@ -167,7 +166,7 @@ if __name__ == "__main__":
         # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
         # db_man.execute('DELETE FROM specific_results WHERE n_req = 2')
 
-        for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 15"):
+        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 9 and n_veh = 2 and n_ins = 8 ORDER BY processo"):
             print row
 
         # print '-'*30

@@ -12,6 +12,68 @@ import jason.asSyntax.*;
 public class schedule_vns extends DefaultInternalAction {
 	
 	private double known_time = 0;
+	
+	private ListTerm OneOneExchange(TransitionSystem ts, ListTerm Sch, int i_pe) throws Exception {
+		ListTerm NewSch = Sch.cloneLT();
+		ListTerm Sch_backup = Sch.cloneLT();
+		double [] Sch_metrics = functions.metrics(Sch, "", ts);
+		double [] NewSch_metrics = functions.metrics(NewSch, "", ts);
+		double vns_cost = Double.MAX_VALUE;
+		// Random rand = new Random();
+		// int rand_event_index = rand.nextInt(n_estrela) + i_pe;
+		
+		OUTER_LOOP: 
+        	for (int index = i_pe+1; index < Sch.size(); index++) {		            // todos os eventos futuros
+        		Term event_1 = NewSch.remove(index);
+        		ListTerm NewSch_backup = NewSch.cloneLT();
+        		for (int next_index = index; next_index < NewSch.size(); next_index++) { // todos os eventos futuros
+        			Term event_2 = NewSch.remove(next_index);
+        			NewSch.add(next_index, event_1);
+        			NewSch.add(index, event_2);
+        			NewSch = functions.Sch_time_fit(NewSch, next_index-1);
+        			NewSch_metrics = functions.metrics(NewSch, "", ts);
+        			vns_cost = functions.metrics_diff_cost(NewSch_metrics, Sch_metrics);
+        			if (vns_cost < 0) {
+        				Sch = NewSch;
+        				break OUTER_LOOP;
+        			}
+    				NewSch = NewSch_backup.cloneLT();							// volta Sch SEM event_1
+        		}
+        		NewSch = Sch_backup.cloneLT();									// volta Sch COM event_1
+        	}
+		
+		return Sch;
+	}
+	
+	private ListTerm OneZeroExchange(TransitionSystem ts, ListTerm Sch, int i_pe) throws Exception {
+		ListTerm NewSch = Sch.cloneLT();
+		ListTerm Sch_backup = Sch.cloneLT();
+		double [] Sch_metrics = functions.metrics(Sch, "", ts);
+		double [] NewSch_metrics = functions.metrics(NewSch, "", ts);
+		double vns_cost = Double.MAX_VALUE;
+		
+		OUTER_LOOP: 
+        	for (int index = i_pe+1; index < Sch.size(); index++) {		            // todos os eventos futuros
+        		Term event = NewSch.remove(index);
+        		ListTerm NewSch_backup = NewSch.cloneLT();
+        		for (int next_index = index; next_index < NewSch.size(); next_index++) { // todos os eventos futuros
+        			if (index != next_index) 	{                               // para eventos diferentes
+            			NewSch.add(next_index, event);
+            			NewSch = functions.Sch_time_fit(NewSch, next_index-1);
+            			NewSch_metrics = functions.metrics(NewSch, "", ts);
+            			vns_cost = functions.metrics_diff_cost(NewSch_metrics, Sch_metrics);
+            			if (vns_cost < 0) {
+            				Sch = NewSch;
+            				break OUTER_LOOP;
+            			}
+        			}
+    				NewSch = NewSch_backup.cloneLT();							// volta Sch SEM event
+        		}
+        		NewSch = Sch_backup.cloneLT();									// volta Sch COM event
+        	}
+		
+		return Sch;
+	}
 
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
@@ -21,11 +83,10 @@ public class schedule_vns extends DefaultInternalAction {
         
         ListTerm Sch = (ListTerm)args[0];
         
-        int i_pe = 0;                        // indice do primeiro evento
-        int n_e = Sch.size();                         // total de eventos
-        
         NumberTerm Kt = (NumberTerm)args[1]; // instante conhecido (agora)
         this.known_time = Kt.solve();
+        
+        int i_pe = 0;                        // indice do primeiro evento
         
         for (Term t: Sch) {    // Todos os eventos da agenda
             ListTerm event = (ListTerm)t;    // Um evento específico
@@ -38,34 +99,8 @@ public class schedule_vns extends DefaultInternalAction {
             }
         }
         
-    	if ( n_e - i_pe > 1 ) { // pelo menos dois eventos no futuro            
-    		ListTerm NewSch = Sch.cloneLT();
-    		ListTerm Sch_backup = Sch.cloneLT();
-    		double [] Sch_metrics = functions.metrics(Sch, "", ts);
-    		double [] NewSch_metrics = functions.metrics(NewSch, "", ts);
-    		double vns_cost = Double.MAX_VALUE;
-    		// Random rand = new Random();
-    		// int rand_event_index = rand.nextInt(n_estrela) + i_pe;
-    		
-    		OUTER_LOOP: 
-	        	for (int index = i_pe+1; index < n_e; index++) {		// todos os eventos futuros
-	        		Term event = NewSch.remove(index);
-	        		ListTerm NewSch_backup = NewSch.cloneLT();
-	        		for (int next_index = i_pe+1; next_index < n_e; next_index++) { // todos os eventos futuros
-	        			if (index != next_index) 	{  // para eventos diferentes
-	            			NewSch.add(next_index, event);
-	            			NewSch = functions.Sch_time_fit(NewSch, next_index-1);
-	            			NewSch_metrics = functions.metrics(NewSch, "", ts);
-	            			vns_cost = functions.metrics_diff_cost(NewSch_metrics, Sch_metrics);
-	            			if (vns_cost < 0) {
-	            				Sch = NewSch;
-	            				break OUTER_LOOP;
-	            			}
-	        			}
-        				NewSch = NewSch_backup.cloneLT();			
-	        		}
-	        		NewSch = Sch_backup.cloneLT();
-	        	}  		
+    	if ( (Sch.size() - i_pe) > 1 ) { // pelo menos dois eventos no futuro            
+    		Sch = this.OneOneExchange(ts, Sch, i_pe);
     	}
     	return un.unifies(args[args.length-1], Sch);
     }

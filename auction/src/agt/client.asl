@@ -6,19 +6,20 @@
 
 /* Plans */
 	   	
-+next(N) : queue_number(N) & .df_search("driver",DL)
++next(N) : queue_number(N)
 	<- 	.print("Iniciando");
 	   	?service_point_x(X);
 	   	?service_point_y(Y);
 	   	?known_time(KT);
 	   	?desired_time(DT);
 	   	?service_type(ST)
+	   	.df_search("driver",DL)
 	   	.send(DL,tell, auction(ST, X, Y, KT, DT));
 	   	.at("now + 1 s", {+!decide}) .
 	   
 +!decide : .findall(b(V,A), bid(V)[source(A)], L) & .length(L, N) & N >= 1
 	<- 	.min(L,b(V,W));
-		if (V >= 9223372036854775800) {
+		if (V >= 922337203685477580) {
 			.print("Impossible to perform my request");
 			.send("end_time",tell,infeasible)
 		} else {
