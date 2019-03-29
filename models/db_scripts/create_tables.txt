@@ -5,7 +5,7 @@ CREATE TABLE global_results(
 	processo TEXT NOT NULL,
 	w_time_mean REAL, w_time_std REAL,
 	t_time_mean REAL, t_time_std REAL,
-	runtime REAL, obj REAL,
+	runtime REAL, obj REAL, t_distance REAL,
 	PRIMARY KEY(n_req, n_veh, n_ins, processo)
 )
 
