@@ -73,7 +73,7 @@ public class functions{
 			
 			if (index != 0) {
 				/** Calculo do tempo de viagem
-				 * 	so realizado a partir do segundo evento, já que é retroativo **/	    		
+				 * 	so realizado a partir do segundo evento, já que é retroativo **/
 	    		metrics[0] += functions.travel_distance(event, (ListTerm)Sch.get(index-1));
 			}
 			
@@ -132,8 +132,6 @@ public class functions{
 		
 		if (functions.travel_distance(later_event, final_event) + later_atendimento.solve() > parameters.MAX_TIME ) {
 			metrics[0] = Double.POSITIVE_INFINITY;
-		} else {
-			metrics[0] += functions.travel_distance((ListTerm)Sch.get(Sch.size()-1), final_event);
 		} /** Se é possível terminar a rota antes de acabar a simulação, ok, se não infinito **/
 		
 		// ts.getAg().getLogger().info("METRICS total ->"+metrics[0]+" "+metrics[1]+" "+metrics[2]);

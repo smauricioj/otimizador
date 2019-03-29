@@ -153,7 +153,6 @@ class Resultado:
 			i, k = [int(x) for x in tup.split(',')]
 			self.tempos[k].append((i,float(value)))
 		elif var == 'x' and aprox(float(value), 1.0, 0.0001):
-			print tup
 			i, j, k = [int(x) for x in tup.split(',')]
 			if i == 0 and j == (2 * self.ins.n) + 1:
 				pass
@@ -371,23 +370,28 @@ class Resultado:
 		conn.commit()
 		conn.close()
 
-	def result_data_DB_leilao_global(self, rtime, obj, w_times_mean, w_times_std, t_times_mean, t_times_std):
+	def result_data_DB_leilao_global(self, rtime, obj, w_times_mean, w_times_std, t_times_mean, t_times_std, t_traveled):
 
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		data = (n_req, v_veh, n_ins, self.optimal_method, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, 0)
+		data = (n_req, v_veh, n_ins, self.optimal_method, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, obj, t_traveled)
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
-		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
+		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?)''', data)
 
 		conn.commit()
 		conn.close()
 
 	def result_data_DB(self, rtime, obj):
 		req_data = self.ins.get_pos_requests()
+		tau = self.ins.get_tau()
 		n_req, n_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
 		w_times = np.array([])
 		t_times = np.array([])
 		specific_data = list()
+		t_traveled = 0
+		for veh, trips in enumerate(self.rotas):
+			for trip in trips:
+				t_traveled += tau[trip]
 		for req in req_data:
 			desired_time = req[4]
 			ini_time = None
@@ -406,12 +410,12 @@ class Resultado:
 		global_data = [(n_req, n_veh, n_ins, self.optimal_method,
 			            w_times.mean(), w_times.std(),
 			            t_times.mean(), t_times.std(),
-			            rtime, obj)]
+			            rtime, obj, t_traveled)]
 
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		for data in global_data:
-			c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?)''', data)
+			c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?)''', data)
 		for data in specific_data:
 			c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
 

@@ -92,6 +92,13 @@ class Leilao:
 		check_call(args.split(' '), shell = True)
 
 	def result(self):
+		def distance_between(event0, event1):
+			x0 = event0[3]
+			y0 = event0[4]
+			x1 = event1[3]
+			y1 = event1[4]
+			return np.sqrt(np.power(x0-x1,2)+np.power(y0-y1,2))
+
 		if not self.static:
 			try:			
 				df = pd.read_csv(path.join(self.actual_path, 'auction\\tmp\\data.csv'), sep = ';', header = None)
@@ -101,12 +108,17 @@ class Leilao:
 			else:
 				w_times = np.array([])
 				t_times = np.array([])
+				traveled_distance = 0
 				for _, serie in df.iterrows():
 					if serie[0] == 'end_time':
 						self.rtime = float(serie[1])
 					else:
 					    client_list = list()
-					    for event in literal_eval(serie[1]):
+					    Sch = literal_eval(serie[1])
+					    print Sch
+					    for index, event in enumerate(Sch):
+					    	if index > 0:
+					    		traveled_distance += distance_between(event, Sch[index-1])
 					        client = int(event[0].split('_')[-1])
 					        if client != 0:
 					            if client not in client_list:
@@ -118,4 +130,10 @@ class Leilao:
 					                self.res.result_data_DB_leilao_specific(client, desired_time, ini_time, end_time)
 					                w_times = np.append(w_times, ini_time - desired_time)
 					                t_times = np.append(t_times, end_time - ini_time)
-				self.res.result_data_DB_leilao_global(self.rtime, 0, w_times.mean(), w_times.std(), t_times.mean(), t_times.std())
+					    traveled_distance += distance_between(Sch[-1],["client_000",0,0,0,0])
+				print "-"*50
+				print traveled_distance
+				print np.sum(w_times)
+				print np.sum(t_times)
+				obj = 0.33*traveled_distance + 0.33*np.sum(w_times) + 0.33*np.sum(t_times)
+				self.res.result_data_DB_leilao_global(self.rtime, obj, w_times.mean(), w_times.std(), t_times.mean(), t_times.std(), traveled_distance)
