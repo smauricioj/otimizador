@@ -4,7 +4,7 @@ mas auction {
 			agent driver_: driver.asl {
 				instances: 6
 				beliefs: schedule([["client_000",0,0,0,0,"drop"]])
-				goals: vns_free
+				goals: vns_block
 				focus: tools.queue
 				
 } 

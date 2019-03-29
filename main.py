@@ -145,10 +145,12 @@ if __name__ == "__main__":
 
     if resultar:
         # Resultado(Instancia('00_00_000.json')).plot_global_result_data()
-        ins = Instancia('05_02_007.json')
+        ins = Instancia('05_02_001.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
-            if k[0] == 5:
+            if k[0] == 0 and k[1] in [2,4]:
+                print "Key: ",k," and Value: ",v
+            if k[0] == 6 and k[1] in [2,4]:
                 print "Key: ",k," and Value: ",v
 
     if tabelar:                
@@ -166,7 +168,7 @@ if __name__ == "__main__":
         # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
         # db_man.execute('DELETE FROM specific_results WHERE n_req = 2')
 
-        for row in db_man.execute("SELECT * FROM specific_results WHERE n_req = 9 and n_veh = 2 and n_ins = 8 ORDER BY processo"):
+        for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 1 ORDER BY processo"):
             print row
 
         # print '-'*30

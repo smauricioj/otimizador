@@ -21,7 +21,7 @@ class Otimizador:
 		self.optimal_method = "Otimizado"
 		self.res = resultado.Resultado(self.ins, self.optimal_method)
 
-		self.save_data_DB = False
+		self.save_data_DB = True
 
 		self.save_lp = False
 		self.output_lp_name = 'out.lp'
