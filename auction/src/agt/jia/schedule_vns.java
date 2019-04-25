@@ -85,20 +85,27 @@ public class schedule_vns extends DefaultInternalAction {
         this.known_time = Kt.solve();
         
         int i_pe = 0;                        // indice do primeiro evento
+		Random rand = new Random();
+		int choice = 0;
         
         for (Term t: Sch) {    // Todos os eventos da agenda
-            ListTerm event = (ListTerm)t;    // Um evento especï¿½fico
+            ListTerm event = (ListTerm)t;    // Um evento específico
             NumberTerm et = (NumberTerm)event.get(1); // instante do evento
             if ( et.solve() < this.known_time ) {
-            	/* se ï¿½ passado aumenta o index do primeiro evento */
+            	/* se é passado aumenta o index do primeiro evento */
             	i_pe += 1;
             } else {
             	break;
             }
         }
         
-    	if ( (Sch.size() - i_pe) > 1 ) { // pelo menos dois eventos no futuro            
-    		Sch = this.OneOneExchange(ts, Sch, i_pe);
+    	if ( (Sch.size() - i_pe) > 1 ) { // pelo menos dois eventos no futuro
+    		choice = rand.nextInt(2);
+    		if (choice == 0) {
+        		Sch = this.OneZeroExchange(ts, Sch, i_pe);    			
+    		} else {
+        		Sch = this.OneOneExchange(ts, Sch, i_pe);
+    		}
     	}
     	return un.unifies(args[args.length-1], Sch);
     }

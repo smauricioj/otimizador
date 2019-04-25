@@ -21,7 +21,9 @@
 
 +infeasible : end_time(E)
 	<-  .wait(E);
-		.stopMAS.
+		if (V == true) {
+			.stopMAS;
+		}.
 		
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
