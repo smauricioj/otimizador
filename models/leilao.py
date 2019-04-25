@@ -115,7 +115,6 @@ class Leilao:
 					else:
 					    client_list = list()
 					    Sch = literal_eval(serie[1])
-					    print Sch
 					    for index, event in enumerate(Sch):
 					    	if index > 0:
 					    		traveled_distance += distance_between(event, Sch[index-1])

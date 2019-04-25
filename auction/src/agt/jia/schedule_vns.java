@@ -19,8 +19,6 @@ public class schedule_vns extends DefaultInternalAction {
 		double [] Sch_metrics = functions.metrics(Sch, "", ts);
 		double [] NewSch_metrics = functions.metrics(NewSch, "", ts);
 		double vns_cost = Double.MAX_VALUE;
-		// Random rand = new Random();
-		// int rand_event_index = rand.nextInt(n_estrela) + i_pe;
 		
 		OUTER_LOOP: 
         	for (int index = i_pe+1; index < Sch.size(); index++) {		            // todos os eventos futuros
@@ -89,10 +87,10 @@ public class schedule_vns extends DefaultInternalAction {
         int i_pe = 0;                        // indice do primeiro evento
         
         for (Term t: Sch) {    // Todos os eventos da agenda
-            ListTerm event = (ListTerm)t;    // Um evento específico
+            ListTerm event = (ListTerm)t;    // Um evento especï¿½fico
             NumberTerm et = (NumberTerm)event.get(1); // instante do evento
             if ( et.solve() < this.known_time ) {
-            	/* se é passado aumenta o index do primeiro evento */
+            	/* se ï¿½ passado aumenta o index do primeiro evento */
             	i_pe += 1;
             } else {
             	break;

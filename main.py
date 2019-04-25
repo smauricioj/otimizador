@@ -168,7 +168,7 @@ if __name__ == "__main__":
         # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
         # db_man.execute('DELETE FROM specific_results WHERE n_req = 2')
 
-        for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 1 ORDER BY processo"):
+        for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 50"):
             print row
 
         # print '-'*30
