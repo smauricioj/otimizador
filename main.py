@@ -9,7 +9,8 @@ from models.leilao import Leilao
 from models.gerador import Gerador
 from models.resultado import Resultado
 from models.instancia import Instancia
-from models.db_manager import Db_manager
+
+from json import load
 from getopt import getopt, GetoptError
 from sqlite3 import connect
 from sys import argv
@@ -20,10 +21,13 @@ import pandas as pd
 
 if __name__ == "__main__":
 
+    if not path.isfile('conf.json'):
+        raise NameError
+    with open('conf.json') as file:
+        conf = load(file)
 
     actual_path = path.dirname(path.abspath("__file__"))
-    instancia_path = path.join(actual_path,'models\\instancias')
-    resultados_path = path.join(actual_path,'resultados')    
+    instancia_path = path.join(actual_path,'models\\'+conf['instancias'])
     scripts_path = path.join(actual_path,'models\\db_scripts')
 
     try:
@@ -32,6 +36,7 @@ if __name__ == "__main__":
     except GetoptError as err:
         print str(err)
         exit()
+
     opt_list = [opt for opt, opt_args in opts]
     otimizar = '-o' in opt_list
     leiloar = '-l' in opt_list
@@ -40,20 +45,6 @@ if __name__ == "__main__":
     tabelar = '-t' in opt_list
 
     if gerar:
-                
-        # ################################################### #
-        #                                                     #
-        # PANIC BUTTON - Caso delete todas as instâncias      #
-        #                                                     #
-        # q_veh = 4                                           #
-        # for cen in range(15):                               #
-        #     for n_req in [6, 8, 10, 12, 14]:
-        #         ger = Gerador(n_req)           #
-        #         ger.set_data(4, q_veh, 1)
-        #         ger.save_ins()                         #
-        # exit()                                              #
-        # ################################################### #
-
         print "#"*70
         print "#"
         print u"# Iniciando processo de gerar novas instâncias."
@@ -144,7 +135,6 @@ if __name__ == "__main__":
                 method(r, vns_free)
 
     if resultar:
-        # Resultado(Instancia('00_00_000.json')).plot_global_result_data()
         ins = Instancia('05_02_001.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
@@ -153,12 +143,9 @@ if __name__ == "__main__":
             if k[0] == 6 and k[1] in [2,4]:
                 print "Key: ",k," and Value: ",v
 
-    if tabelar:                
-        # actual_path = path.dirname(path.abspath("__file__"))
-        # scripts_path = path.join(actual_path,'models\\db_scripts')
-        # instancia_path = path.join(actual_path,'models\\instancias')
-
-        db_man = Db_manager('persistent_data.db', scripts_path)
+    if tabelar:
+        conn = connect('persistent_data.db')
+        c = conn.cursor()
 
         # for row in db_man.execute_script('get_tables.txt'):
         #     for v in row:
@@ -168,7 +155,7 @@ if __name__ == "__main__":
         # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
         # db_man.execute('DELETE FROM specific_results WHERE n_req = 2')
 
-        for row in db_man.execute("SELECT * FROM global_results WHERE n_req = 50"):
+        for row in c.execute("SELECT * FROM global_results WHERE n_req = 50"):
             print row
 
         # print '-'*30
@@ -190,7 +177,7 @@ if __name__ == "__main__":
         #         print data
         #         db_man.execute_script('script.txt', data)
 
-        db_man.commit()
-        db_man.close()
+        conn.commit()
+        conn.close()
 
     exit()

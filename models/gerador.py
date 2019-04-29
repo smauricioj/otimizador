@@ -80,7 +80,7 @@ class Gerador():
 		dt_p, kt_p = get_requests_by_service_type(self, 'pick')
 		dt_d, kt_d = get_requests_by_service_type(self, 'drop')
 		
-		self.data['requests'] = sorted(self.data['requests'], key = lambda k: k['desired_time'])
+		self.data['requests'] = sorted(self.data['requests'], key = lambda k: k['known_time'])
 
 		dt = np.append(dt_p, dt_d)
 		kt = np.append(kt_p, kt_d)
