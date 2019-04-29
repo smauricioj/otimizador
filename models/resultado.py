@@ -406,19 +406,20 @@ class Resultado:
 					end_time = tup[1]
 			w_times = np.append(w_times, ini_time - desired_time)
 			t_times = np.append(t_times, end_time - ini_time)
-			specific_data.append( (n_req, n_veh, n_ins, req[0], self.optimal_method, desired_time, ini_time, end_time) )
+			#specific_data.append( (n_req, n_veh, n_ins, req[0], self.optimal_method, desired_time, ini_time, end_time) )
 		global_data = [(n_req, n_veh, n_ins, self.optimal_method,
 			            w_times.mean(), w_times.std(),
 			            t_times.mean(), t_times.std(),
-			            rtime, obj, t_traveled)]
+			            rtime, obj, t_traveled,
+			            self.ins.get_priori_ratio(),self.ins.get_dp_ratio(),
+			            self.ins.get_urgency()[0], self.ins.get_dynamism())]
 
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		for data in global_data:
-			c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?)''', data)
+			c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', data)
 		for data in specific_data:
 			c.execute(''' REPLACE INTO specific_results VALUES (?,?,?,?,?,?,?,?)''', data)
-
 		conn.commit()
 		conn.close()
 

@@ -1,3 +1,14 @@
 {
-	"instancias":""
+	"instancias_folder":"priori_meio",
+	"gerador_data": {
+		"dp_ratio":0.5,
+		"priori_ratio":0.5,
+		"total_time":120,
+		"map_center":[10,10],
+		"n_req":6,
+		"n_veh":2,
+		"n_cen":15,
+		"q_veh":4,
+		"t_ser":1
+	}
 }

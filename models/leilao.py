@@ -17,6 +17,7 @@ from ast import literal_eval
 class Leilao:
 
 	def __init__(self, ins_id, vns_free):
+		#TODO arrumar o conf.
 		self.actual_path = path.dirname(path.abspath("__file__"))
 		self.rtime = None
 		self.optimal_method = "Leilao"

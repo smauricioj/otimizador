@@ -17,12 +17,12 @@ class Instancia:
     de rotas veiculares
     '''
     
-    def __init__(self, name_file):
+    def __init__(self, conf, name_file):
         '''
         Recebe o nome do arquivo de instância para inicializar a classe
         '''
-        actual_path = path.dirname(path.abspath("__file__"))
-        instancia_path = path.join(actual_path,'models\\instancias\\'+name_file)
+        
+        instancia_path = path.join(conf['instancia_path'],name_file)
         with open(instancia_path, 'r') as file:
             d = loads(file.read())
             file.close()
@@ -38,6 +38,8 @@ class Instancia:
         self.u_mean = d['static_data']['urgency_mean']
         self.u_std = d['static_data']['urgency_std']
         self.dynamism = d['static_data']['dynamism']
+        self.dp_ratio = d['static_data']['dp_ratio']
+        self.priori_ratio = d['static_data']['priori_ratio']
 
         self.deposito_x = 0
         self.deposito_y = 0
@@ -139,6 +141,12 @@ class Instancia:
 
     def get_dynamism(self):
         return self.dynamism
+
+    def get_dp_ratio(self):
+        return self.dp_ratio
+
+    def get_priori_ratio(self):
+        return self.priori_ratio
 
     def get_req(self):
         return self.__requests

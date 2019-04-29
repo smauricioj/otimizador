@@ -12,8 +12,8 @@ import resultado
 
 class Otimizador:
 
-	def __init__(self, ins_id):
-		self.ins = Instancia('{}.json'.format(ins_id))
+	def __init__(self, conf, ins_id):
+		self.ins = Instancia(conf, '{}.json'.format(ins_id))
 		self.C0 = 0.33
 		self.C1 = 0.33
 		self.C2 = 0.33
@@ -173,7 +173,7 @@ class Otimizador:
 					for v in mod.getVars():
 						self.res.add_trip('{}={}'.format(v.varName, v.x))
 					# self.res.fig_requests()
-					self.res.fig_routes()
+					# self.res.fig_routes()
 					self.res.result_data_DB(mod.runtime, mod.objVal)
 				else :
 					self.res.reset_data_DB()
@@ -182,7 +182,6 @@ class Otimizador:
 		else:
 			for v in mod.getVars():
 				self.res.add_trip('{}={}'.format(v.varName, v.x))
-			self.res.print_routes()
 
 
 		if self.save_lp:

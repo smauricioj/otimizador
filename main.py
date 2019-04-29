@@ -14,10 +14,7 @@ from json import load
 from getopt import getopt, GetoptError
 from sqlite3 import connect
 from sys import argv
-from os import listdir, path
-from ast import literal_eval
-
-import pandas as pd
+from os import listdir, path, mkdir
 
 if __name__ == "__main__":
 
@@ -27,85 +24,54 @@ if __name__ == "__main__":
         conf = load(file)
 
     actual_path = path.dirname(path.abspath("__file__"))
-    instancia_path = path.join(actual_path,'models\\'+conf['instancias'])
-    scripts_path = path.join(actual_path,'models\\db_scripts')
+    instancia_path = path.join(actual_path,'models\\instancias\\'+conf['instancias_folder'])
+    if not path.isdir(instancia_path):
+        mkdir(instancia_path)
+
+    conf['actual_path'] = actual_path
+    conf['instancia_path'] = instancia_path
 
     try:
-        singles = 'olgrt'
+        singles = 'olgr'
         opts, args = getopt(argv[1:],singles)
     except GetoptError as err:
         print str(err)
         exit()
 
     opt_list = [opt for opt, opt_args in opts]
-    otimizar = '-o' in opt_list
-    leiloar = '-l' in opt_list
-    gerar = '-g' in opt_list
-    resultar = '-r' in opt_list
-    tabelar = '-t' in opt_list
 
-    if gerar:
+    if '-g' in opt_list:
         print "#"*70
         print "#"
         print u"# Iniciando processo de gerar novas instâncias."
-        commited_response = False
-        while not commited_response:
-            data = {}
-            print u"# Para cancelar o processo, responda 'S' a qualquer pergunta."
-            print ''
 
-            def get_response(data, parameter):
-                valid_response = False
-                r = None
-                while not valid_response:
-                    r = raw_input('Qual valor do parametro "{}"? > '.format(parameter))
-                    if r == 'S':
-                        exit()
-                    elif not r.isdigit():
-                        print u'Parâmetro inválido'
-                    else:
-                        valid_response = True
-                data[parameter] = int(r)
+        gerador_data = conf['gerador_data']
 
-            parameters = ['q_veh', 'n_veh', 't_ser', 'n_req', 'n_cen']
-            for p in parameters:
-                get_response(data, p)
-
-            print u"Confirmando dados."
-            for k, v in data.iteritems():
-                print k, ' -> ', v
-
-            valid_response = False
-            while not valid_response:
-                r = raw_input('Confirma? (Y/N) > ')
-                if r.upper() in ('Y','N'):
-                    valid_response = True
-                else:
-                    print u'Resposta inválida'
-            if r == 'Y':
-                commited_response = True
-            else:
-                print u'Reiniciando processo de gerar novas instâncias'
-
-        for cen in range(data['n_cen']):
-            ger = Gerador(data['n_req'])
-            ger.set_data(data['n_veh'], data['q_veh'], data['t_ser'])
+        for cen in range(gerador_data['n_cen']):
+            print "# ",gerador_data['n_cen']-cen
+            ger = Gerador(conf)
+            ger.set_data(gerador_data['n_req'], gerador_data['n_veh'], gerador_data['q_veh'], gerador_data['t_ser'])
             ger.save_ins()
+            del ger
 
-    if otimizar or leiloar:
-        if otimizar:
+        print u"# Fim do processo de gerar novas instâncias."
+        print "#"
+        print "#"*70
+
+    if '-o' in opt_list or '-l' in opt_list:
+        if '-o' in opt_list:
             from models.otimizador import Otimizador
             text = u"# Iniciando processo de otimizar instâncias."
             input_text = 'Qual instancia(s) otimizar? > '
             def method(ins_id, *args):
-                Otimizador(ins_id).begin()
+                Otimizador(conf, ins_id).begin()
         else:
             from models.leilao import Leilao
             text = u"# Iniciando processo de leiloar instâncias."
             input_text = 'Qual instancia(s) realizar leilao? > '
             input_text_2 = 'Liberar VNS para agentes? > '
             def method(ins_id, *args):
-                l = Leilao(ins_id, args[0])
+                l = Leilao(conf, ins_id, args[0])
                 l.begin()
                 l.result()
 
@@ -117,7 +83,7 @@ if __name__ == "__main__":
             r = raw_input(input_text)
             vns_free = False
 
-            if leiloar and r.lower() not in ['s','static']:
+            if '-l' in opt_list and r.lower() not in ['s','static']:
                 r2 = raw_input(input_text_2)
                 if r2.lower() == 'y':
                     vns_free = True
@@ -134,7 +100,7 @@ if __name__ == "__main__":
             else:
                 method(r, vns_free)
 
-    if resultar:
+    if '-r' in opt_list:
         ins = Instancia('05_02_001.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
@@ -142,42 +108,5 @@ if __name__ == "__main__":
                 print "Key: ",k," and Value: ",v
             if k[0] == 6 and k[1] in [2,4]:
                 print "Key: ",k," and Value: ",v
-
-    if tabelar:
-        conn = connect('persistent_data.db')
-        c = conn.cursor()
-
-        # for row in db_man.execute_script('get_tables.txt'):
-        #     for v in row:
-        #         print v
-        # exit()
-
-        # print 'DELETE FROM global_results WHERE n_req = 5 and n_veh = 2 and n_ins = 6 and processo = "Leilao" '
-        # db_man.execute('DELETE FROM specific_results WHERE n_req = 2')
-
-        for row in c.execute("SELECT * FROM global_results WHERE n_req = 50"):
-            print row
-
-        # print '-'*30
-
-        # for row in db_man.execute("SELECT AVG(fim_time-ini_time), opt, n_ins FROM specific_results WHERE n_req = 5 and n_veh = 4 GROUP BY n_ins, opt ORDER BY opt, n_ins"):
-        #     print row
-
-        # for filename in listdir(instancia_path):
-        #     print filename
-        #     if path.isfile(path.join(instancia_path, filename)):
-        #         ins = Instancia(filename)
-        #         n, m, n_ins = [int(x) for x in filename.split('.')[0].split('_')]
-        #         data = [(n, m, n_ins, 1, m, 4, ins.get_T(), ins.get_dynamism(),
-        #                                        ins.get_urgency()[0], ins.get_urgency()[1] )]
-        #         for i, req in enumerate(ins.get_req()):
-        #             data.append( (n, m, n_ins, i, req['service_type'], req['desired_time'],
-        #                                           req['known_time'], req['service_point_x'],
-        #                                           req['service_point_y']) )
-        #         print data
-        #         db_man.execute_script('script.txt', data)
-
-        conn.commit()
-        conn.close()
 
     exit()

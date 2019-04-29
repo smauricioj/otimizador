@@ -12,24 +12,27 @@ import matplotlib.pyplot as plt
 
 class Gerador():
 
-	def __init__(self, n_total_requests, dp_rate = 0.5, local_path = ''):
-		self.n_total_requests = n_total_requests
-		self.n_drop_requests = int(round(dp_rate*n_total_requests))
-		self.n_pick_requests = n_total_requests - self.n_drop_requests
-		self.map_center = [10,10]
-		self.total_time = 120
-		self.local_instancia_path = 'models\\instancias'+str(local_path)
+	def __init__(self, conf):
+		self.conf = conf
+		self.map_center = conf['gerador_data']['map_center']
+		self.total_time = conf['gerador_data']['total_time']
+		self.priori_ratio = conf['gerador_data']['priori_ratio']
+		self.dp_ratio = conf['gerador_data']['dp_ratio']
 
 		self.data = {}
 		self.data['static_data'] = {}
 		self.data['requests'] = []
 
-	def set_data(self, n_veh, q_veh, t_ser):
+	def set_data(self, n_total_requests, n_veh, q_veh, t_ser):
+		self.n_total_requests = n_total_requests
+		self.n_drop_requests = int(round(self.dp_ratio*n_total_requests))
+		self.n_pick_requests = n_total_requests - self.n_drop_requests
 		self.data['static_data']['number_of_vehicles'] = n_veh
 		self.data['static_data']['max_vehicle_capacity'] = q_veh
 		self.data['static_data']['service_time'] = t_ser
 		self.data['static_data']['total_time'] = self.total_time
-		self.data['requests'] = []
+		self.data['static_data']['priori_ratio'] = self.priori_ratio
+		self.data['static_data']['dp_ratio'] = self.dp_ratio
 
 		def get_requests_by_service_type(self, service_type):
 
@@ -68,7 +71,7 @@ class Gerador():
 				request = {}
 				request['max_wait_time'] = 10
 				request['max_ride_time'] = 100
-				request['known_time'] = known_times[i]
+				request['known_time'] = np.random.choice([known_times[i],0], p = [1-self.priori_ratio,self.priori_ratio])
 				request['desired_time'] = desired_times[i]
 				request['service_point_x'] = round(points[0][i] - self.map_center[0], 1)
 				request['service_point_y'] = round(points[1][i] - self.map_center[1], 1)
@@ -114,8 +117,7 @@ class Gerador():
 		n_req = str(self.n_total_requests).zfill(2)
 		n_veh = str(self.data['static_data']['number_of_vehicles']).zfill(2)
 
-		actual_path = path.dirname(path.abspath("__file__"))
-		instancia_path = path.join(actual_path,self.local_instancia_path)
+		instancia_path = self.conf['instancia_path']
 		ids = [0]
 		for file in listdir(instancia_path):
 			if path.isfile(path.join(instancia_path,file)):
