@@ -5,14 +5,8 @@ Created on Thu Apr 19 13:14:13 2018
 @author: Sergio P.
 """
 
-from models.leilao import Leilao
-from models.gerador import Gerador
-from models.resultado import Resultado
-from models.instancia import Instancia
-
 from json import load
 from getopt import getopt, GetoptError
-from sqlite3 import connect
 from sys import argv
 from os import listdir, path, mkdir
 
@@ -23,13 +17,10 @@ if __name__ == "__main__":
     with open('conf.json') as file:
         conf = load(file)
 
-    actual_path = path.dirname(path.abspath("__file__"))
-    instancia_path = path.join(actual_path,'models\\instancias\\'+conf['instancias_folder'])
-    if not path.isdir(instancia_path):
-        mkdir(instancia_path)
-
-    conf['actual_path'] = actual_path
-    conf['instancia_path'] = instancia_path
+    conf['actual_path'] = path.dirname(path.abspath("__file__"))
+    conf['instancia_path'] = path.join( conf['actual_path'],'models\\instancias\\'+conf['instancias_folder'])
+    if not path.isdir(conf['instancia_path']):
+        mkdir(conf['instancia_path'])
 
     try:
         singles = 'olgr'
@@ -41,6 +32,8 @@ if __name__ == "__main__":
     opt_list = [opt for opt, opt_args in opts]
 
     if '-g' in opt_list:
+        from models.gerador import Gerador
+
         print "#"*70
         print "#"
         print u"# Iniciando processo de gerar novas instâncias."
@@ -50,7 +43,8 @@ if __name__ == "__main__":
         for cen in range(gerador_data['n_cen']):
             print "# ",gerador_data['n_cen']-cen
             ger = Gerador(conf)
-            ger.set_data(gerador_data['n_req'], gerador_data['n_veh'], gerador_data['q_veh'], gerador_data['t_ser'])
+            ger.set_data(gerador_data['n_req'], gerador_data['n_veh'],
+                         gerador_data['q_veh'], gerador_data['t_ser'])
             ger.save_ins()
             del ger
 
@@ -61,46 +55,40 @@ if __name__ == "__main__":
     if '-o' in opt_list or '-l' in opt_list:
         if '-o' in opt_list:
             from models.otimizador import Otimizador
-            text = u"# Iniciando processo de otimizar instâncias."
-            input_text = 'Qual instancia(s) otimizar? > '
-            def method(ins_id, *args):
+            processo = 'otimizar'
+            processo_data = 'otimizador_data'
+            def method(ins_id):
                 Otimizador(conf, ins_id).begin()
         else:
             from models.leilao import Leilao
-            text = u"# Iniciando processo de leiloar instâncias."
-            input_text = 'Qual instancia(s) realizar leilao? > '
-            input_text_2 = 'Liberar VNS para agentes? > '
-            def method(ins_id, *args):
-                l = Leilao(conf, ins_id, args[0])
-                l.begin()
-                l.result()
+            processo = 'leiloar'
+            processo_data = 'leilao_data'
+            def method(ins_id):
+                Leilao(conf, ins_id).begin()
 
         print "#"*70
         print "#"
-        print text
-        stop = False
-        while not stop:
-            r = raw_input(input_text)
-            vns_free = False
+        print u"# Iniciando processo de {} instâncias.".format(processo)
 
-            if '-l' in opt_list and r.lower() not in ['s','static']:
-                r2 = raw_input(input_text_2)
-                if r2.lower() == 'y':
-                    vns_free = True
+        ins_id = conf[processo_data]['ins_id']
 
-            if r.lower() == 's':
-                stop = True
-            elif r == 'all':
-                for filename in listdir(instancia_path):
-                    print filename
-                    ins_id = filename.split('.')[0]
-                    if int(ins_id.split('_')[0]) == 0:
-                        continue
-                    method(ins_id, vns_free)
-            else:
-                method(r, vns_free)
+        if ins_id == 'all':
+            for filename in listdir(conf['instancia_path']):
+                print filename
+                ins_id = filename.split('.')[0]
+                if int(ins_id.split('_')[0]) == 0:
+                    continue
+                method(ins_id)
+        else:
+            if ins_id not in [filename.split('.')[0] for filename in listdir(conf['instancia_path'])]:
+                raise NameError
+            elif ins_id.split('_')[0] == 0:
+                raise NameError
+            method(ins_id)
 
     if '-r' in opt_list:
+        from models.instancia import Instancia
+
         ins = Instancia('05_02_001.json')
         tau = ins.get_tau()
         for k, v in tau.iteritems():
@@ -108,5 +96,3 @@ if __name__ == "__main__":
                 print "Key: ",k," and Value: ",v
             if k[0] == 6 and k[1] in [2,4]:
                 print "Key: ",k," and Value: ",v
-
-    exit()

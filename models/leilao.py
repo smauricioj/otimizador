@@ -16,25 +16,31 @@ from ast import literal_eval
 
 class Leilao:
 
-	def __init__(self, ins_id, vns_free):
-		#TODO arrumar o conf.
-		self.actual_path = path.dirname(path.abspath("__file__"))
+	def __init__(self, conf, ins_id):
+		self.conf = conf
+		self.actual_path = conf['actual_path']
 		self.rtime = None
 		self.optimal_method = "Leilao"
-		self.vns_free = vns_free
+		self.vns_free = conf['leilao_data']['vns_free']
 		if self.vns_free:
 			self.optimal_method += " VNS"
 		self.end_time_active = 'true'
 		if ins_id != 'static':
 			self.static = False
-			self.ins = Instancia('{}.json'.format(ins_id))
+			self.ins = Instancia(conf, '{}.json'.format(ins_id))
 		else:
 			self.static = True
 			self.ins = Instancia('00_00_000.json')
 		self.res = Resultado(self.ins, self.optimal_method)
 		with open(path.join(self.actual_path, 'auction\\tmp\\data.csv'), 'w') as file:
 			file.close()
-
+		
+	def _distance_between(event0, event1):
+		x0 = event0[3]
+		y0 = event0[4]
+		x1 = event1[3]
+		y1 = event1[4]
+		return np.sqrt(np.power(x0-x1,2)+np.power(y0-y1,2))
 
 	def begin(self):
 		if not self.static:
@@ -92,14 +98,6 @@ class Leilao:
 		args += '{}/auction/auction.jcm'.format(self.actual_path)
 		check_call(args.split(' '), shell = True)
 
-	def result(self):
-		def distance_between(event0, event1):
-			x0 = event0[3]
-			y0 = event0[4]
-			x1 = event1[3]
-			y1 = event1[4]
-			return np.sqrt(np.power(x0-x1,2)+np.power(y0-y1,2))
-
 		if not self.static:
 			try:			
 				df = pd.read_csv(path.join(self.actual_path, 'auction\\tmp\\data.csv'), sep = ';', header = None)
@@ -118,7 +116,7 @@ class Leilao:
 					    Sch = literal_eval(serie[1])
 					    for index, event in enumerate(Sch):
 					    	if index > 0:
-					    		traveled_distance += distance_between(event, Sch[index-1])
+					    		traveled_distance += self._distance_between(event, Sch[index-1])
 					        client = int(event[0].split('_')[-1])
 					        if client != 0:
 					            if client not in client_list:
@@ -127,10 +125,10 @@ class Leilao:
 					                desired_time = event[2]
 					            else:
 					                end_time = event[1]
-					                self.res.result_data_DB_leilao_specific(client, desired_time, ini_time, end_time)
+					                # self.res.result_data_DB_leilao_specific(client, desired_time, ini_time, end_time)
 					                w_times = np.append(w_times, ini_time - desired_time)
 					                t_times = np.append(t_times, end_time - ini_time)
-					    traveled_distance += distance_between(Sch[-1],["client_000",0,0,0,0])
+					    traveled_distance += self._distance_between(Sch[-1],["client_000",0,0,0,0])
 				print "-"*50
 				print traveled_distance
 				print np.sum(w_times)

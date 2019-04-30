@@ -19,7 +19,7 @@
 			.stopMAS;
 		}.
 
-+infeasible : end_time(E)
++infeasible : end_time(E) & active(V)
 	<-  .wait(E);
 		if (V == true) {
 			.stopMAS;

@@ -10,5 +10,12 @@
 		"n_cen":15,
 		"q_veh":4,
 		"t_ser":1
+	},
+	"leilao_data": {
+		"vns_free":true,
+		"ins_id":"06_02_001"
+	},
+	"otimizador_data": {
+		"ins_id":"06_02_001"
 	}
 }

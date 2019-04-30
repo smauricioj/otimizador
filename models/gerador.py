@@ -52,7 +52,7 @@ class Gerador():
 			points = np.reshape(points, (2, n_requests))
 
 			inside = False
-			rate_requests = float(self.total_time)/n_requests
+			rate_requests = (float(self.total_time)/n_requests)*0.85 #menor pra garantir o caber dos pedidos no tempo
 			while not inside:
 				desired_times = np.cumsum(np.random.poisson(rate_requests, n_requests))
 				if service_type == 'pick':

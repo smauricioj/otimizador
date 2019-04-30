@@ -373,10 +373,15 @@ class Resultado:
 	def result_data_DB_leilao_global(self, rtime, obj, w_times_mean, w_times_std, t_times_mean, t_times_std, t_traveled):
 
 		n_req, v_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		data = (n_req, v_veh, n_ins, self.optimal_method, w_times_mean, w_times_std, t_times_mean, t_times_std, rtime, obj, t_traveled)
+		data = (n_req, v_veh, n_ins, self.optimal_method,
+			    w_times_mean, w_times_std,
+			    t_times_mean, t_times_std,
+			    rtime, obj, t_traveled,
+				self.ins.get_priori_ratio(),self.ins.get_dp_ratio(),
+				self.ins.get_urgency()[0], self.ins.get_dynamism())
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
-		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?)''', data)
+		c.execute(''' REPLACE INTO global_results VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', data)
 
 		conn.commit()
 		conn.close()
