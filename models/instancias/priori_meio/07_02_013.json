@@ -1,0 +1,78 @@
+{
+    "static_data": {
+        "total_time": 120,
+        "urgency_mean": 1.29,
+        "urgency_std": 0.67,
+        "number_of_vehicles": 2,
+        "max_vehicle_capacity": 4,
+        "service_time": 1,
+        "priori_ratio": 0.5,
+        "dp_ratio": 0.5,
+        "dynamism": 0.47
+    },
+    "requests": [
+        {
+            "service_type": "pick",
+            "desired_time": 33,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 1.5,
+            "service_point_y": 0.3
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 25,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.6,
+            "service_point_y": -1.2
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 76,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 3.4,
+            "service_point_y": 2.9
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 96,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 2.7,
+            "service_point_y": 0.7
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 53,
+            "known_time": 50.77,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.8,
+            "service_point_y": 0.5
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 56,
+            "known_time": 54.35,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -0.8,
+            "service_point_y": 4.0
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 97,
+            "known_time": 96.89,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.7,
+            "service_point_y": -1.2
+        }
+    ]
+}

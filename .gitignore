@@ -3,7 +3,6 @@ gurobi.log
 
 # Resultados
 resultados/
-models/instancias/
 auction/tmp/
 *.lp
 *.ilp

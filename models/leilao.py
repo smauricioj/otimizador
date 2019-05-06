@@ -35,7 +35,7 @@ class Leilao:
 		with open(path.join(self.actual_path, 'auction\\tmp\\data.csv'), 'w') as file:
 			file.close()
 		
-	def _distance_between(event0, event1):
+	def _distance_between(self, event0, event1):
 		x0 = event0[3]
 		y0 = event0[4]
 		x1 = event1[3]

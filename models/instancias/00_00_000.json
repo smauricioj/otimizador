@@ -1,0 +1,12 @@
+{
+    "static_data": {
+        "total_time": 120,
+        "service_time": 1,
+        "urgency_std": 0.92,
+        "number_of_vehicles": 1,
+        "max_vehicle_capacity": 4,
+        "urgency_mean": 1.57,
+        "dynamism": 0.51
+    },
+    "requests": []
+}

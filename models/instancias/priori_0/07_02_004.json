@@ -1,0 +1,76 @@
+{
+    "static_data": {
+        "total_time": 120,
+        "service_time": 1,
+        "urgency_std": 1.01,
+        "number_of_vehicles": 2,
+        "max_vehicle_capacity": 4,
+        "urgency_mean": 1.41,
+        "dynamism": 0.63
+    },
+    "requests": [
+        {
+            "service_type": "drop",
+            "desired_time": 24,
+            "known_time": 23.91,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 2.3,
+            "service_point_y": -3.5
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 37,
+            "known_time": 35.17,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.7,
+            "service_point_y": -1.4
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 46,
+            "known_time": 45.53,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -0.4,
+            "service_point_y": 1.2
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 71,
+            "known_time": 69.39,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.9,
+            "service_point_y": 3.7
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 81,
+            "known_time": 80.01,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -0.4,
+            "service_point_y": 0.3
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 99,
+            "known_time": 97.58,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 6.4,
+            "service_point_y": 1.8
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 112,
+            "known_time": 108.55,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 2.2,
+            "service_point_y": 3.9
+        }
+    ]
+}
