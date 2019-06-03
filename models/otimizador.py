@@ -13,6 +13,7 @@ import resultado
 class Otimizador:
 
 	def __init__(self, conf, ins_id):
+		self.conf = conf
 		self.ins = Instancia(conf, '{}.json'.format(ins_id))
 		self.C0 = 0.33
 		self.C1 = 0.33
@@ -24,7 +25,7 @@ class Otimizador:
 		self.save_data_DB = True
 
 		self.save_lp = False
-		self.output_lp_name = 'out.lp'
+		self.output_lp_name = '{}.lp'.format(ins_id)
 
 	def begin(self):
 		M = GRB.INFINITY

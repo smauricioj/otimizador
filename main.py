@@ -72,13 +72,19 @@ if __name__ == "__main__":
 
         ins_id = conf[processo_data]['ins_id']
 
-        if ins_id == 'all':
+        if ins_id == 'all' or ':' in ins_id:
+            if ':' in ins_id:
+                filtro, value = ins_id.split(':')
+                order = ['req','veh'].index(filtro)
             for filename in listdir(conf['instancia_path']):
-                print filename
-                ins_id = filename.split('.')[0]
-                if int(ins_id.split('_')[0]) == 0:
+                print '# ', filename
+                file_ins_id = filename.split('.')[0]
+                if int(file_ins_id.split('_')[0]) == 0:
                     continue
-                method(ins_id)
+                if ':' in ins_id and int(file_ins_id.split('_')[order]) != int(value):
+                    # print 'entrei com ',int(file_ins_id.split('_')[order]),' e ',value
+                    continue
+                method(file_ins_id)
         else:
             if ins_id not in [filename.split('.')[0] for filename in listdir(conf['instancia_path'])]:
                 raise NameError

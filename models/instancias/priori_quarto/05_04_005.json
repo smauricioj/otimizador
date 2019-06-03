@@ -1,0 +1,60 @@
+{
+    "static_data": {
+        "total_time": 120,
+        "urgency_mean": 1.21,
+        "urgency_std": 0.48,
+        "number_of_vehicles": 4,
+        "max_vehicle_capacity": 4,
+        "service_time": 1,
+        "priori_ratio": 0.25,
+        "dp_ratio": 0.5,
+        "dynamism": 0.43
+    },
+    "requests": [
+        {
+            "service_type": "drop",
+            "desired_time": 37,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 3.5,
+            "service_point_y": 2.8
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 106,
+            "known_time": 0.0,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -11.5,
+            "service_point_y": -0.1
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 57,
+            "known_time": 55.45,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 1.5,
+            "service_point_y": -0.9
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 67,
+            "known_time": 65.41,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -1.4,
+            "service_point_y": -4.5
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 100,
+            "known_time": 99.37,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 0.8,
+            "service_point_y": -1.8
+        }
+    ]
+}
