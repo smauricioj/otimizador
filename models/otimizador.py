@@ -173,8 +173,8 @@ class Otimizador:
 					# print('Runtime: %g' %mod.runtime)
 					for v in mod.getVars():
 						self.res.add_trip('{}={}'.format(v.varName, v.x))
-					# self.res.fig_requests()
-					# self.res.fig_routes()
+					self.res.fig_requests()
+					self.res.fig_routes()
 					self.res.result_data_DB(mod.runtime, mod.objVal)
 				else :
 					self.res.reset_data_DB()

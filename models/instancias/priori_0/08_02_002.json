@@ -1,85 +1,87 @@
 {
     "static_data": {
         "total_time": 120,
-        "service_time": 1,
-        "urgency_std": 1.11,
+        "urgency_mean": 2.03,
+        "urgency_std": 0.93,
         "number_of_vehicles": 2,
         "max_vehicle_capacity": 4,
-        "urgency_mean": 1.98,
-        "dynamism": 0.66
+        "service_time": 1,
+        "priori_ratio": 0,
+        "dp_ratio": 0.5,
+        "dynamism": 0.65
     },
     "requests": [
         {
-            "service_type": "drop",
-            "desired_time": 20,
-            "known_time": 18.77,
-            "max_ride_time": 100,
-            "max_wait_time": 10,
-            "service_point_x": -0.6,
-            "service_point_y": -5.1
-        },
-        {
             "service_type": "pick",
-            "desired_time": 30,
-            "known_time": 25.94,
+            "desired_time": 23,
+            "known_time": 20.08,
             "max_ride_time": 100,
             "max_wait_time": 10,
-            "service_point_x": -1.0,
-            "service_point_y": -1.8
+            "service_point_x": -2.9,
+            "service_point_y": 7.4
         },
         {
             "service_type": "drop",
-            "desired_time": 49,
-            "known_time": 47.13,
+            "desired_time": 31,
+            "known_time": 29.48,
             "max_ride_time": 100,
             "max_wait_time": 10,
-            "service_point_x": 0.9,
-            "service_point_y": -5.2
+            "service_point_x": -6.1,
+            "service_point_y": 3.1
         },
         {
             "service_type": "pick",
-            "desired_time": 65,
-            "known_time": 62.05,
+            "desired_time": 48,
+            "known_time": 45.82,
             "max_ride_time": 100,
             "max_wait_time": 10,
-            "service_point_x": 1.0,
-            "service_point_y": 2.2
-        },
-        {
-            "service_type": "drop",
-            "desired_time": 80,
-            "known_time": 78.32,
-            "max_ride_time": 100,
-            "max_wait_time": 10,
-            "service_point_x": 0.3,
-            "service_point_y": 2.6
-        },
-        {
-            "service_type": "pick",
-            "desired_time": 88,
-            "known_time": 86.08,
-            "max_ride_time": 100,
-            "max_wait_time": 10,
-            "service_point_x": -3.0,
+            "service_point_x": -3.8,
             "service_point_y": 3.2
         },
         {
             "service_type": "drop",
-            "desired_time": 106,
-            "known_time": 106.0,
+            "desired_time": 61,
+            "known_time": 61.0,
             "max_ride_time": 100,
             "max_wait_time": 10,
-            "service_point_x": 0.8,
-            "service_point_y": -3.6
+            "service_point_x": 5.5,
+            "service_point_y": -5.1
         },
         {
             "service_type": "pick",
-            "desired_time": 115,
-            "known_time": 112.84,
+            "desired_time": 82,
+            "known_time": 78.85,
             "max_ride_time": 100,
             "max_wait_time": 10,
-            "service_point_x": -0.5,
-            "service_point_y": -6.4
+            "service_point_x": 0.1,
+            "service_point_y": 0.8
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 84,
+            "known_time": 81.53,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -6.2,
+            "service_point_y": -2.3
+        },
+        {
+            "service_type": "drop",
+            "desired_time": 97,
+            "known_time": 95.39,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": 2.9,
+            "service_point_y": -0.0
+        },
+        {
+            "service_type": "pick",
+            "desired_time": 108,
+            "known_time": 105.58,
+            "max_ride_time": 100,
+            "max_wait_time": 10,
+            "service_point_x": -2.2,
+            "service_point_y": 5.5
         }
     ]
 }

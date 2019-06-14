@@ -10,20 +10,26 @@
 
 +!start : .time(H,M,S)	<-  +initial_time(H,M,S).
 
-+next(N) : queue_number(N) & end_time(E) & active(V) & .time(H,M,S) & .my_name(Name)
-	<-	?initial_time(IH,IM,IS);
-		jia.send_data(Name,((H-IH)*60*60)+((M-IM)*60)+S-IS)
-		.broadcast(tell, end);
-		.wait(E);
-		if (V == true) {
++infeasible : active(V)
+	<- if (V == true) {
 			.stopMAS;
 		}.
 
-+infeasible : end_time(E) & active(V)
-	<-  .wait(E);
-		if (V == true) {
++next(N) : queue_number(N) & end_time(E) & .time(H,M,S) & .my_name(Name)
+	<-	?initial_time(IH,IM,IS);
+		jia.send_data(Name,((H-IH)*60*60)+((M-IM)*60)+S-IS)
+		.df_search("driver", DL);
+	   	.length(DL, TD);
+	   	+total_drivers(TD);
+	   	.send(DL,tell, end);
+	   	!!end_all.
+		
++!end_all : .findall(b(V,A), end_ok[source(A)], L) & .length(L, N) & total_drivers(TD) & N == TD & active(V)
+	<-	if (V == true) {
 			.stopMAS;
 		}.
+		
++!end_all : true <- .wait(10); !!end_all.
 		
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

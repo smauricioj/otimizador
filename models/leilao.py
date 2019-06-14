@@ -30,7 +30,8 @@ class Leilao:
 			self.ins = Instancia(conf, '{}.json'.format(ins_id))
 		else:
 			self.static = True
-			self.ins = Instancia('00_00_000.json')
+			conf['instancia_path'] = path.split(conf['instancia_path'])[0]
+			self.ins = Instancia(conf, '00_00_000.json')
 		self.res = Resultado(self.ins, self.optimal_method)
 		with open(path.join(self.actual_path, 'auction\\tmp\\data.csv'), 'w') as file:
 			file.close()

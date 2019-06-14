@@ -1,21 +1,21 @@
 {
-	"instancias_folder":"priori_quarto",
+	"instancias_folder":"priori_1",
 	"gerador_data": {
 		"dp_ratio":0.5,
-		"priori_ratio":0.25,
+		"priori_ratio":1,
 		"total_time":120,
 		"map_center":[10,10],
-		"n_req":50,
-		"n_veh":4,
+		"n_req":[10],
+		"n_veh":[2],
 		"n_cen":15,
 		"q_veh":4,
 		"t_ser":1
 	},
 	"leilao_data": {
-		"vns_free":true,
-		"ins_id":"req:50"
+		"vns_free":false,
+		"ins_id":"all"
 	},
 	"otimizador_data": {
-		"ins_id":"all"
+		"ins_id":"req:[10]"
 	}
 }

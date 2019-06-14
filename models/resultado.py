@@ -430,14 +430,16 @@ class Resultado:
 
 	def reset_data_DB(self):
 		n_req, n_veh, n_ins = [int(x) for x in self.instancia_name.split('_')]
-		data = (n_req, n_veh, n_ins, self.optimal_method)
+		data = (n_req, n_veh, n_ins, self.optimal_method, self.ins.get_priori_ratio(), self.ins.get_dp_ratio())
 		conn = connect('persistent_data.db')
 		c = conn.cursor()
 		c.execute(''' DELETE FROM global_results
 					  WHERE n_req = {} and
 					        n_veh = {} and
 					        n_ins = {} and
-					        processo = "{}"  '''.format(*data))
+					        processo = "{}" and
+					        priori_ratio = {} and
+					        dp_ratio = {} '''.format(*data))
 		c.execute(''' DELETE FROM specific_results
 					  WHERE n_req = {} and
 					        n_veh = {} and

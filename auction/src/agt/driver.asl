@@ -48,9 +48,10 @@ last_known_time(0).
 		inc;
 		.
 		
-+end : .my_name(N)
++end[source(A)] : .my_name(N)
 	<-	?schedule(Sch);
 		jia.send_data(N,Sch);
+		.send(A,tell,end_ok)
 		.
 
 { include("$jacamoJar/templates/common-cartago.asl") }

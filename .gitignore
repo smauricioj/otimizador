@@ -4,6 +4,7 @@ gurobi.log
 # Resultados
 resultados/
 auction/tmp/
+instancias/
 *.lp
 *.ilp
 

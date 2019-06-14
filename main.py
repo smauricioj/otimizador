@@ -9,6 +9,7 @@ from json import load
 from getopt import getopt, GetoptError
 from sys import argv
 from os import listdir, path, mkdir
+from ast import literal_eval
 
 if __name__ == "__main__":
 
@@ -42,11 +43,12 @@ if __name__ == "__main__":
 
         for cen in range(gerador_data['n_cen']):
             print "# ",gerador_data['n_cen']-cen
-            ger = Gerador(conf)
-            ger.set_data(gerador_data['n_req'], gerador_data['n_veh'],
-                         gerador_data['q_veh'], gerador_data['t_ser'])
-            ger.save_ins()
-            del ger
+            for n_req in gerador_data['n_req']:
+                for n_veh in gerador_data['n_veh']:
+                    ger = Gerador(conf)
+                    ger.set_data(n_req, n_veh, gerador_data['q_veh'], gerador_data['t_ser'])
+                    ger.save_ins()
+                    del ger
 
         print u"# Fim do processo de gerar novas instâncias."
         print "#"
@@ -74,19 +76,21 @@ if __name__ == "__main__":
 
         if ins_id == 'all' or ':' in ins_id:
             if ':' in ins_id:
-                filtro, value = ins_id.split(':')
+                filtro, values = ins_id.split(':')
                 order = ['req','veh'].index(filtro)
             for filename in listdir(conf['instancia_path']):
                 print '# ', filename
                 file_ins_id = filename.split('.')[0]
                 if int(file_ins_id.split('_')[0]) == 0:
                     continue
-                if ':' in ins_id and int(file_ins_id.split('_')[order]) != int(value):
+                if ':' in ins_id and int(file_ins_id.split('_')[order]) not in literal_eval(values):
                     # print 'entrei com ',int(file_ins_id.split('_')[order]),' e ',value
                     continue
                 method(file_ins_id)
         else:
-            if ins_id not in [filename.split('.')[0] for filename in listdir(conf['instancia_path'])]:
+            if ins_id == 'static' and '-l' in opt_list:
+                pass
+            elif ins_id not in [filename.split('.')[0] for filename in listdir(conf['instancia_path'])]:
                 raise NameError
             elif ins_id.split('_')[0] == 0:
                 raise NameError
